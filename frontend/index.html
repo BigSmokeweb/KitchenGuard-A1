@@ -270,18 +270,22 @@
 
           <!-- Mode Selector Tabs (Image vs Video) -->
           <div class="dropbox-tabs" style="display:flex;justify-content:center;gap:12px;margin-bottom:16px;">
-            <button type="button" class="btn btn--primary btn--sm" id="drop-tab-image" style="display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
+            <button type="button" class="btn btn--primary btn--sm" id="drop-tab-image"
+              style="display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
               </svg>
               📷 Image Mode
             </button>
-            <button type="button" class="btn btn--outline btn--sm" id="drop-tab-video" style="display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="23 7 16 12 23 17 23 7"/>
-                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+            <button type="button" class="btn btn--outline btn--sm" id="drop-tab-video"
+              style="display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="23 7 16 12 23 17 23 7" />
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
               </svg>
               🎥 Video Mode
             </button>
@@ -301,10 +305,12 @@
               </div>
               <p class="drop-zone__title" id="drop-title-text">Drop a kitchen photo here</p>
               <p class="drop-zone__subtitle" id="drop-sub-text">JPG, PNG · Max 50MB</p>
-              
+
               <div style="margin-top:12px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
                 <button type="button" class="btn btn--primary btn--sm" id="drop-browse-btn">Browse files</button>
-                <button type="button" class="btn btn--ghost btn--sm" id="drop-sample-btn" style="color:#10B981;border:1px solid rgba(16,185,129,0.3);background:rgba(16,185,129,0.08);">✨ Try Sample Photo</button>
+                <button type="button" class="btn btn--ghost btn--sm" id="drop-sample-btn"
+                  style="color:#10B981;border:1px solid rgba(16,185,129,0.3);background:rgba(16,185,129,0.08);">✨ Try
+                  Sample Photo</button>
               </div>
             </div>
 
@@ -324,15 +330,23 @@
                 alt="Preview" hidden />
               <video id="result-video" controls playsinline loop muted
                 style="max-width:100%;max-height:460px;margin:0 auto;border-radius:8px;" hidden></video>
-              
+
               <!-- AI Detections Summary Card -->
-              <div id="detection-summary" style="margin-top:16px;padding:16px;background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.2);border-radius:10px;text-align:left;" hidden>
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+              <div id="detection-summary"
+                style="margin-top:16px;padding:16px;background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.2);border-radius:10px;text-align:left;"
+                hidden>
+                <div
+                  style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
                   <h4 style="margin:0;font-size:1.05rem;color:#10B981;display:flex;align-items:center;gap:6px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
                     AI Hygiene Analysis Complete
                   </h4>
-                  <span id="stat-speed" style="font-size:0.85rem;color:#94a3b8;background:rgba(255,255,255,0.05);padding:3px 10px;border-radius:12px;">-- ms</span>
+                  <span id="stat-speed"
+                    style="font-size:0.85rem;color:#94a3b8;background:rgba(255,255,255,0.05);padding:3px 10px;border-radius:12px;">--
+                    ms</span>
                 </div>
                 <div id="stat-count-badge" style="margin-bottom:12px;font-size:0.95rem;font-weight:600;"></div>
                 <div id="detections-tags" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
