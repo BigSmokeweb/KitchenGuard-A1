@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KitchenGuard AI — Intelligent Kitchen Hygiene Monitoring</title>
+  <meta name="description"
+    content="KitchenGuard AI monitors your commercial kitchen 24/7, flags hygiene risks in real-time, and keeps you audit-ready — no inspector required." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <header class="nav" id="main-nav" role="banner">
+    <nav class="nav__inner container" aria-label="Main navigation">
+      <a href="#" class="nav__logo" aria-label="KitchenGuard AI home">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <rect width="28" height="28" rx="7" fill="#10B981" />
+          <path d="M8 14.5c0-3.31 2.69-6 6-6s6 2.69 6 6" stroke="#fff" stroke-width="2" stroke-linecap="round" />
+          <circle cx="14" cy="18" r="2.5" fill="#fff" />
+          <path d="M11 21h6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        <span>KitchenGuard <strong>AI</strong></span>
+      </a>
+      <ul class="nav__links" role="list">
+        <li><a href="#features" class="nav__link">Features</a></li>
+        <li><a href="#how-it-works" class="nav__link">How it works</a></li>
+      </ul>
+      <div class="nav__cta">
+        <a href="#" class="btn btn--ghost" id="nav-signin">Sign in</a>
+        <a href="#" class="btn btn--primary" id="nav-get-started">Get started free</a>
+      </div>
+      <button class="nav__hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false"
+        aria-controls="mobile-menu">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+    <div class="nav__mobile" id="mobile-menu" role="dialog" aria-label="Mobile navigation" hidden>
+      <a href="#features" class="nav__mobile-link">Features</a>
+      <a href="#how-it-works" class="nav__mobile-link">How it works</a>
+      <a href="#" class="btn btn--primary btn--full">Get started free</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero" id="hero" aria-labelledby="hero-heading">
+      <div class="container hero__inner">
+        <div class="hero__grid">
+          <!-- Left Column: Content -->
+          <div class="hero__content">
+            <div class="hero__badge reveal" aria-label="New feature announcement">
+              <span class="badge__dot" aria-hidden="true"></span>
+              New: Real-time bacterial load prediction &mdash; <a href="#">See what's new &rarr;</a>
+            </div>
+            <h1 class="hero__heading reveal" id="hero-heading">
+              Your kitchen, always<br />
+              <span class="text--accent">audit-ready.</span>
+            </h1>
+            <p class="hero__sub reveal">
+              KitchenGuard AI monitors hygiene conditions 24/7, flags risks before they become violations, and keeps
+              your team compliant &mdash; without the clipboard.
+            </p>
+            <div class="hero__actions reveal">
+              <a href="#features" class="btn btn--primary btn--lg" id="hero-cta-primary">Features</a>
+              <a href="#how-it-works" class="btn btn--outline btn--lg" id="hero-cta-secondary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" />
+                  <path d="M10 8.5l5 3.5-5 3.5V8.5z" fill="currentColor" />
+                </svg>
+                Watch demo
+              </a>
+            </div>
+            <p class="hero__trust reveal">No credit card required &nbsp;&middot;&nbsp; HACCP &amp; FDA 21 CFR compliant
+              &nbsp;&middot;&nbsp; SOC 2 Type II</p>
+          </div>
+
+          <!-- Right Column: Media Viewer with Selector -->
+          <div class="hero__media-wrapper reveal">
+            <!-- Media Selector Tabs -->
+            <div class="media-toggle" role="tablist" aria-label="Media preview options">
+              <button class="media-toggle__btn active" id="tab-image" role="tab" aria-selected="true"
+                aria-controls="media-image">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <polyline points="21 15 16 10 5 21" />
+                </svg>
+                Image View
+              </button>
+              <button class="media-toggle__btn" id="tab-video" role="tab" aria-selected="false"
+                aria-controls="media-video">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polygon points="23 7 16 12 23 17 23 7" />
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                </svg>
+                Video View
+              </button>
+            </div>
+
+            <!-- Media Container -->
+            <div class="hero__media-box">
+              <!-- Image Option -->
+              <div class="media-panel active" id="media-image" role="tabpanel" aria-labelledby="tab-image">
+                <img src="Kitchen_Img.png" alt="KitchenGuard AI hygiene inspection dashboard" class="hero__img"
+                  width="1200" height="675" loading="eager" />
+              </div>
+
+              <!-- Video Option -->
+              <div class="media-panel" id="media-video" role="tabpanel" aria-labelledby="tab-video" hidden>
+                <div class="video-container">
+                  <video id="hero-video" controls poster="Kitchen_Img.png" preload="metadata" playsinline>
+                    <source src="Kitchen_Video.mp4" type="video/mp4" />
+                    Your browser does not support HTML5 video.
+                  </video>
+                  <div class="video-overlay-badge" aria-hidden="true">
+                    <span class="live-indicator"></span> LIVE AI AUDIT DEMO
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features section" id="features" aria-labelledby="features-heading">
+      <div class="container">
+        <div class="section__header reveal">
+          <span class="section__tag">Platform Features</span>
+          <h2 class="section__heading" id="features-heading">Everything your kitchen needs to stay compliant</h2>
+          <p class="section__sub">Built for health inspectors' standards. Designed for kitchen managers' realities.</p>
+        </div>
+        <div class="features__grid">
+          <!-- 1. PPE Compliance Detection -->
+          <article class="feature-card reveal" tabindex="0">
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a4 4 0 0 0-4 4v1H6a2 2 0 0 0-2 2v2a8 8 0 0 0 16 0V9a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z" />
+                <path d="M9 13v1a3 3 0 0 0 6 0v-1" />
+              </svg>
+            </div>
+            <h3 class="feature-card__title">PPE Compliance Detection</h3>
+            <p class="feature-card__desc">AI vision verifies chef hats, hairnets, masks, gloves, and protective kitchen
+              wear across all staff in real-time.</p>
+          </article>
+
+          <!-- 2. Real-Time CCTV Monitoring -->
+          <article class="feature-card reveal" tabindex="0">
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+              </svg>
+            </div>
+            <h3 class="feature-card__title">Real-Time CCTV Monitoring</h3>
+            <p class="feature-card__desc">Continuous computer vision stream analyzing food prep counters, washing
+              stations, and storage 24/7 without manual patrols.</p>
+          </article>
+
+          <!-- 3. Hygiene Compliance Score -->
+          <article class="feature-card reveal" tabindex="0">
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+            </div>
+            <h3 class="feature-card__title">Hygiene Compliance Score</h3>
+            <p class="feature-card__desc">Dynamic, real-time safety scores calculated from surface cleanliness,
+              temperature benchmarks, and protocol adherence.</p>
+          </article>
+
+          <!-- 4. Violation Logging -->
+          <article class="feature-card reveal" tabindex="0">
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2" />
+                <path d="M7 8h10M7 12h10M7 16h6" />
+              </svg>
+            </div>
+            <h3 class="feature-card__title">Violation Logging</h3>
+            <p class="feature-card__desc">Automated timestamps, video clips, and categorized event logs for
+              cross-contamination risks, missed cleanings, and safety breaches.</p>
+          </article>
+
+          <!-- 5. Alert System -->
+          <article class="feature-card reveal" tabindex="0">
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
+              </svg>
+            </div>
+            <h3 class="feature-card__title">Alert System</h3>
+            <p class="feature-card__desc">Instant WhatsApp, SMS, push, and audio notifications sent to floor managers
+              when high-priority safety infractions occur.</p>
+          </article>
+
+          <!-- 6. AI Audit Reports -->
+          <article class="feature-card reveal" tabindex="0">
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+              </svg>
+            </div>
+            <h3 class="feature-card__title">AI Audit Reports</h3>
+            <p class="feature-card__desc">One-click, regulatory-grade PDF audits and trends benchmarked against HACCP,
+              FDA 21 CFR, and local health guidelines.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS / SIMPLE SETUP + INTERACTIVE AI DROPBOX DEMO -->
+    <section class="how section section--gray" id="how-it-works" aria-labelledby="how-heading">
+      <div class="container">
+        <div class="section__header reveal">
+          <span class="section__tag">Simple Setup &amp; Live Detection</span>
+          <h2 class="section__heading" id="how-heading">Test the AI Model in Seconds</h2>
+          <p class="section__sub">Drag &amp; drop any kitchen image or video below to simulate instant hygiene &amp; PPE
+            detection.</p>
+        </div>
+
+        <!-- 3-Step Setup Overview -->
+        <div class="how__steps reveal">
+          <div class="how__step">
+            <div class="how__step-num" aria-hidden="true">01</div>
+            <div class="how__step-content">
+              <h3>Upload footage or connect feed</h3>
+              <p>Drop a photo, upload a video clip, or connect live camera streams via RTSP in minutes.</p>
+            </div>
+          </div>
+          <div class="how__line" aria-hidden="true"></div>
+          <div class="how__step">
+            <div class="how__step-num" aria-hidden="true">02</div>
+            <div class="how__step-content">
+              <h3>AI analyzes compliance</h3>
+              <p>Model scans for PPE adherence, food handling safety, cross-contamination, and station clean status.</p>
+            </div>
+          </div>
+          <div class="how__line" aria-hidden="true"></div>
+          <div class="how__step">
+            <div class="how__step-num" aria-hidden="true">03</div>
+            <div class="how__step-content">
+              <h3>Instant highlights &amp; log</h3>
+              <p>Get visual detection bounding boxes, compliance flags, and automated incident logs in real time.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive AI Dropbox -->
+        <div class="dropbox-container reveal">
+
+          <!-- Mode Selector Tabs (Image vs Video) -->
+          <div class="dropbox-tabs" style="display:flex;justify-content:center;gap:12px;margin-bottom:16px;">
+            <button type="button" class="btn btn--primary btn--sm" id="drop-tab-image"
+              style="display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              📷 Image Mode
+            </button>
+            <button type="button" class="btn btn--outline btn--sm" id="drop-tab-video"
+              style="display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="23 7 16 12 23 17 23 7" />
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+              </svg>
+              🎥 Video Mode
+            </button>
+          </div>
+
+          <div class="drop-zone" id="drop-zone" tabindex="0" role="button" aria-label="Upload kitchen image or video">
+            <input type="file" id="drop-file-input" accept="image/*" hidden />
+
+            <div id="drop-prompt">
+              <div class="drop-zone__icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+                  <path d="M12 12v9" />
+                  <path d="m16 16-4-4-4 4" />
+                </svg>
+              </div>
+              <p class="drop-zone__title" id="drop-title-text">Drop a kitchen photo here</p>
+              <p class="drop-zone__subtitle" id="drop-sub-text">JPG, PNG · Max 50MB</p>
+
+              <div style="margin-top:12px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+                <button type="button" class="btn btn--primary btn--sm" id="drop-browse-btn">Browse files</button>
+                <button type="button" class="btn btn--ghost btn--sm" id="drop-sample-btn"
+                  style="color:#10B981;border:1px solid rgba(16,185,129,0.3);background:rgba(16,185,129,0.08);">✨ Try
+                  Sample Photo</button>
+              </div>
+            </div>
+
+            <!-- Scanning -->
+            <div id="drop-scanning" hidden>
+              <div class="scanning-spinner"></div>
+              <p class="scanning-text">Analyzing...</p>
+              <div class="scanning-bar-track">
+                <div class="scanning-bar-fill" id="scan-progress"></div>
+              </div>
+            </div>
+
+            <!-- Result -->
+            <div id="drop-result" hidden style="width:100%;">
+              <img id="result-img"
+                style="max-width:100%;max-height:460px;object-fit:contain;margin:0 auto;border-radius:8px;" src=""
+                alt="Preview" hidden />
+              <video id="result-video" controls playsinline loop muted
+                style="max-width:100%;max-height:460px;margin:0 auto;border-radius:8px;" hidden></video>
+
+              <!-- AI Detections Summary Card -->
+              <div id="detection-summary"
+                style="margin-top:16px;padding:16px;background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.2);border-radius:10px;text-align:left;"
+                hidden>
+                <div
+                  style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+                  <h4 style="margin:0;font-size:1.05rem;color:#10B981;display:flex;align-items:center;gap:6px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    AI Hygiene Analysis Complete
+                  </h4>
+                  <span id="stat-speed"
+                    style="font-size:0.85rem;color:#94a3b8;background:rgba(255,255,255,0.05);padding:3px 10px;border-radius:12px;">--
+                    ms</span>
+                </div>
+                <div id="stat-count-badge" style="margin-bottom:12px;font-size:0.95rem;font-weight:600;"></div>
+                <div id="detections-tags" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+              </div>
+
+              <div style="text-align:center;margin-top:16px;">
+                <button type="button" class="btn btn--outline btn--sm" id="reset-drop-btn">Upload another</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script src="main.js"></script>
+</body>
+
+</html>
