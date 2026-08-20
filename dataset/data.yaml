@@ -1,0 +1,6 @@
+train: D:/kitchen-hygiene-ai/dataset/train/images
+val: D:/kitchen-hygiene-ai/dataset/valid/images
+test: D:/kitchen-hygiene-ai/dataset/test/images
+
+nc: 7
+names: ['apron', 'gloves', 'hairnet', 'mask', 'no_apron', 'no_gloves', 'no_hairnet']
