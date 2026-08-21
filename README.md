@@ -203,6 +203,8 @@ pip install -r requirements.txt
 - The base YOLO weights such as `yolo11n.pt` are not the final trained model.
 - The actual trained checkpoint to use for prediction is `inference_outputs/kitchen-hygiene-final/weights/best.pt`.
 - Always keep the model output directory and dataset config together when moving the project.
+- Vercel site works only to show the frontend and was used for prototype demonstrtion.
+- Model runs perfectly in your own system locally because it requires proper environment to run.
 
 ## License
 
