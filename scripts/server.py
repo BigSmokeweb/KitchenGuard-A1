@@ -20,11 +20,11 @@ from ultralytics import YOLO
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
+ONNX_MODEL_PATH = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-final" / "weights" / "best.onnx"
 DEFAULT_MODEL_PATH = (
-    PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-final" / "weights" / "best.pt"
+    ONNX_MODEL_PATH if ONNX_MODEL_PATH.exists() else (PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-final" / "weights" / "best.pt")
 )
 if not DEFAULT_MODEL_PATH.exists():
-    # Fallback to gpu weights if final weights not found
     DEFAULT_MODEL_PATH = (
         PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-gpu" / "weights" / "best.pt"
     )
@@ -122,9 +122,9 @@ def send_telegram_alert(detections, inference_time_ms, is_video=False):
 @app.on_event("startup")
 def load_yolo_model():
     global model
-    torch.set_num_threads(2)
+    torch.set_num_threads(1)
     print(f"Loading YOLO model from: {DEFAULT_MODEL_PATH}")
-    model = YOLO(str(DEFAULT_MODEL_PATH))
+    model = YOLO(str(DEFAULT_MODEL_PATH), task="detect")
     # Warm up model with a dummy frame so subsequent user requests are instant
     try:
         dummy = np.zeros((320, 320, 3), dtype=np.uint8)
