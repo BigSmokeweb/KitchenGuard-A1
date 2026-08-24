@@ -394,7 +394,7 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
       scanProgress.style.width = progress + '%';
     }, 120);
 
-    var API_BASE_URL = (window.location.origin && window.location.origin.includes(':8000')) ? '' : 'http://localhost:8000';
+    var API_BASE_URL = (window.location.origin && window.location.origin.includes(':8000')) ? '' : 'https://kitchenguard-api-muhp.onrender.com';
 
     var fallbackData = {
       success: true,
