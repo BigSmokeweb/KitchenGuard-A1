@@ -300,168 +300,66 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
     }
   });
 
-  function drawAnnotatedCanvas(imageSrc, detections, callback) {
-    var img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = function () {
-      try {
-        var canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || img.width;
-        canvas.height = img.naturalHeight || img.height;
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
 
-        var W = canvas.width;
-        var H = canvas.height;
+  function handleUploadedFile(file) {
+    if (!file) return;
 
-        detections.forEach(function (det) {
-          var box = det.bbox;
-          var xmin = box[0] * W;
-          var ymin = box[1] * H;
-          var width = (box[2] - box[0]) * W;
-          var height = (box[3] - box[1]) * H;
+    var isImage = file.type.startsWith('image/');
+    var isVideo = file.type.startsWith('video/');
 
-          var isViolation = det.class_name.startsWith('no_');
-          var color = isViolation ? '#ef4444' : '#10b981';
-
-          ctx.strokeStyle = color;
-          ctx.lineWidth = Math.max(3, Math.floor(W / 280));
-          ctx.strokeRect(xmin, ymin, width, height);
-
-          // Glow shadow
-          ctx.shadowColor = color;
-          ctx.shadowBlur = 8;
-          ctx.strokeRect(xmin, ymin, width, height);
-          ctx.shadowBlur = 0;
-
-          // Label
-          var confPct = Math.round(det.confidence * 100);
-          var label = det.class_name + ' ' + confPct + '%';
-          var fontSize = Math.max(13, Math.floor(W / 36));
-          ctx.font = 'bold ' + fontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-          var textWidth = ctx.measureText(label).width;
-
-          var labelY = ymin > fontSize + 10 ? ymin - 6 : ymin + fontSize + 6;
-          ctx.fillStyle = color;
-          ctx.fillRect(xmin, labelY - fontSize, textWidth + 12, fontSize + 8);
-
-          ctx.fillStyle = '#ffffff';
-          ctx.fillText(label, xmin + 6, labelY);
-        });
-
-        callback(canvas.toDataURL('image/jpeg', 0.92));
-      } catch (err) {
-        callback(imageSrc);
-      }
-    };
-    img.onerror = function () {
-      callback(imageSrc);
-    };
-    img.src = imageSrc;
-  }
-
-  function handleUploadedFile(file, directUrl) {
-    var isImage = true;
-    var isVideo = false;
-    var fileUrl = directUrl || '';
-
-    if (file) {
-      isImage = file.type.startsWith('image/');
-      isVideo = file.type.startsWith('video/');
-
-      if (!isImage && !isVideo) {
-        if (titleText) titleText.textContent = 'Please select a JPG, PNG, or MP4 file';
-        return;
-      }
-      fileUrl = URL.createObjectURL(file);
-    } else if (directUrl) {
-      isImage = !directUrl.endsWith('.mp4');
-      isVideo = directUrl.endsWith('.mp4');
-    } else {
+    if (!isImage && !isVideo) {
+      if (titleText) titleText.textContent = 'Please select a JPG, PNG, or MP4 file';
       return;
     }
+
+    var fileUrl = URL.createObjectURL(file);
 
     // Transition to Scanning Phase
     dropPrompt.hidden = true;
     dropResult.hidden = true;
     dropScanning.hidden = false;
-    scanProgress.style.width = '12%';
+    scanProgress.style.width = '15%';
 
-    var progress = 12;
+    var progress = 15;
     var interval = setInterval(function () {
-      progress += Math.floor(Math.random() * 15) + 6;
-      if (progress > 86) progress = 86;
+      progress += Math.floor(Math.random() * 12) + 4;
+      if (progress > 90) progress = 90;
       scanProgress.style.width = progress + '%';
-    }, 120);
+    }, 150);
 
     var API_BASE_URL = (window.location.origin && window.location.origin.includes(':8000')) ? '' : 'https://kitchenguard-api-muhp.onrender.com';
 
-    var fallbackData = {
-      success: true,
-      inference_time_ms: isImage ? 34 : 48,
-      detections_count: 3,
-      detections: [
-        { class_name: 'hairnet', confidence: 0.94, bbox: [0.38, 0.06, 0.62, 0.26] },
-        { class_name: 'apron', confidence: 0.96, bbox: [0.30, 0.32, 0.70, 0.86] },
-        { class_name: 'gloves', confidence: 0.91, bbox: [0.20, 0.60, 0.40, 0.78] }
-      ],
-      annotated_image_base64: null,
-      is_demo: true
-    };
+    var formData = new FormData();
+    formData.append('file', file);
 
-    if (file) {
-      var formData = new FormData();
-      formData.append('file', file);
-
-      fetch(API_BASE_URL + '/predict', {
-        method: 'POST',
-        body: formData
-      })
-      .then(function (res) {
-        if (!res.ok) throw new Error('API server status ' + res.status);
-        return res.json();
-      })
-      .then(function (data) {
-        clearInterval(interval);
-        scanProgress.style.width = '100%';
-        setTimeout(function () {
-          displayDetectionResult(fileUrl, isImage, data);
-        }, 180);
-      })
-      .catch(function (err) {
-        clearInterval(interval);
-        console.warn("Backend inference server offline (running in Cloud Preview mode):", err);
-        scanProgress.style.width = '100%';
-        if (isImage) {
-          drawAnnotatedCanvas(fileUrl, fallbackData.detections, function (annotatedUrl) {
-            fallbackData.annotated_image_url = annotatedUrl;
-            setTimeout(function () {
-              displayDetectionResult(fileUrl, isImage, fallbackData);
-            }, 200);
-          });
-        } else {
-          setTimeout(function () {
-            displayDetectionResult(fileUrl, isImage, fallbackData);
-          }, 200);
-        }
-      });
-    } else {
-      // Direct sample demo simulation
+    fetch(API_BASE_URL + '/predict', {
+      method: 'POST',
+      body: formData
+    })
+    .then(function (res) {
+      if (!res.ok) throw new Error('API server status ' + res.status);
+      return res.json();
+    })
+    .then(function (data) {
       clearInterval(interval);
       scanProgress.style.width = '100%';
-      if (isImage) {
-        drawAnnotatedCanvas(fileUrl, fallbackData.detections, function (annotatedUrl) {
-          fallbackData.annotated_image_url = annotatedUrl;
-          setTimeout(function () {
-            displayDetectionResult(fileUrl, isImage, fallbackData);
-          }, 200);
-        });
-      } else {
-        setTimeout(function () {
-          displayDetectionResult(fileUrl, isImage, fallbackData);
-        }, 200);
-      }
-    }
+      setTimeout(function () {
+        displayDetectionResult(fileUrl, isImage, data);
+      }, 150);
+    })
+    .catch(function (err) {
+      clearInterval(interval);
+      console.error("Model Inference Error:", err);
+      scanProgress.style.width = '100%';
+
+      var errorData = {
+        success: false,
+        error_message: 'Model is currently initializing on Render (Render spins down after inactivity). Please try again in 30 seconds!'
+      };
+      setTimeout(function () {
+        displayDetectionResult(fileUrl, isImage, errorData);
+      }, 200);
+    });
   }
 
   function displayDetectionResult(url, isImage, data) {
@@ -476,8 +374,6 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
     if (isImage) {
       if (data && data.annotated_image_base64) {
         resultImg.src = 'data:image/jpeg;base64,' + data.annotated_image_base64;
-      } else if (data && data.annotated_image_url) {
-        resultImg.src = data.annotated_image_url;
       } else {
         resultImg.src = url;
       }
@@ -498,13 +394,12 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
     if (data && data.success) {
       if (summaryBox) summaryBox.hidden = false;
       if (statSpeed) {
-        var modeLabel = data.is_demo ? ' (Cloud Preview)' : ' (YOLOv11 Live)';
-        statSpeed.textContent = (isImage ? 'Inference: ' : 'Stream Scan: ') + data.inference_time_ms + ' ms' + modeLabel;
+        statSpeed.textContent = (isImage ? 'Inference: ' : 'Stream Scan: ') + data.inference_time_ms + ' ms (YOLOv11 Live)';
       }
 
       if (statCount) {
         if (data.detections_count > 0) {
-          statCount.innerHTML = '<span style="color:#10b981;">🛡️ ' + data.detections_count + ' Safety & PPE Items Verified</span>';
+          statCount.innerHTML = '<span style="color:#10b981;">🛡️ ' + data.detections_count + ' Safety & PPE Items Verified by Model</span>';
         } else {
           statCount.innerHTML = '<span style="color:#10b981;">✅ Compliant - No Violations Detected</span>';
         }
@@ -532,6 +427,11 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
           tagsContainer.appendChild(tag);
         }
       }
+    } else if (summaryBox && data && !data.success) {
+      summaryBox.hidden = false;
+      if (statSpeed) statSpeed.textContent = 'Render Backend Status';
+      if (statCount) statCount.innerHTML = '<span style="color:#f59e0b;">⏳ ' + (data.error_message || 'Connecting to model...') + '</span>';
+      if (tagsContainer) tagsContainer.innerHTML = '';
     } else if (summaryBox) {
       summaryBox.hidden = true;
     }
