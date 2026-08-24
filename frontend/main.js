@@ -320,10 +320,13 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
     dropScanning.hidden = false;
     scanProgress.style.width = '15%';
 
+    var scanningText = document.querySelector('.scanning-text');
+    if (scanningText) scanningText.textContent = 'Running live YOLOv11 model...';
+
     var progress = 15;
     var interval = setInterval(function () {
-      progress += Math.floor(Math.random() * 12) + 4;
-      if (progress > 90) progress = 90;
+      progress += Math.floor(Math.random() * 8) + 3;
+      if (progress > 92) progress = 92;
       scanProgress.style.width = progress + '%';
     }, 150);
 
@@ -354,7 +357,7 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
 
       var errorData = {
         success: false,
-        error_message: 'Model is currently initializing on Render (Render spins down after inactivity). Please try again in 30 seconds!'
+        error_message: 'Render backend took too long to wake up. Click below to try again!'
       };
       setTimeout(function () {
         displayDetectionResult(fileUrl, isImage, errorData);

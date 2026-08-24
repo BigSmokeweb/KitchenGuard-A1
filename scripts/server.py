@@ -122,9 +122,16 @@ def send_telegram_alert(detections, inference_time_ms, is_video=False):
 @app.on_event("startup")
 def load_yolo_model():
     global model
+    torch.set_num_threads(2)
     print(f"Loading YOLO model from: {DEFAULT_MODEL_PATH}")
     model = YOLO(str(DEFAULT_MODEL_PATH))
-    print("YOLO model loaded successfully!")
+    # Warm up model with a dummy frame so subsequent user requests are instant
+    try:
+        dummy = np.zeros((320, 320, 3), dtype=np.uint8)
+        model.predict(source=dummy, imgsz=320, device="cpu", verbose=False)
+        print("YOLO model warmed up and ready for instant inference!")
+    except Exception as e:
+        print(f"Warmup notice: {e}")
 
 
 class DetectionBox(BaseModel):
@@ -186,11 +193,14 @@ async def predict(
             img_np = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
         else:
             image = Image.open(io.BytesIO(contents)).convert("RGB")
+            # Downscale large mobile uploads if >1280 to ensure lightning fast CPU inference (<150ms)
+            if max(image.size) > 1280:
+                image.thumbnail((1280, 1280), Image.Resampling.LANCZOS)
             img_np = np.array(image)
 
         start_time = time.time()
         device = "0" if torch.cuda.is_available() else "cpu"
-        results = model.predict(source=img_np, conf=conf, iou=iou, device=device)
+        results = model.predict(source=img_np, conf=conf, iou=iou, imgsz=640, device=device, verbose=False)
         end_time = time.time()
         inference_time_ms = round((end_time - start_time) * 1000, 2)
 
