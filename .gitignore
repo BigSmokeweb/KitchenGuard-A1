@@ -21,20 +21,39 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.pytest_cache/
 
 # Virtual Environment
 venv/
+.venv/
 ENV/
 env.bak/
 venv.bak/
 
-# Logs
+# Environment Variables & Secrets
+.env
+.env.*
+*.env
+
+# Base YOLO Checkpoints (auto-downloaded by Ultralytics when needed)
+yolo*.pt
+
+# Training outputs / test predictions / intermediate runs
+runs/
+inference_outputs/test_images/
+inference_outputs/**/last.pt
+inference_outputs/kitchen-hygiene-smoke/
+
+# Logs & Temp
 *.log
 logs/
+*.tmp
+*.temp
 
 # OS files
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # IDEs
 .vscode/

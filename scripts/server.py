@@ -46,13 +46,23 @@ app.add_middleware(
 # Load model globally
 model = None
 
-# --- Telegram Config ---
-TELEGRAM_BOT_TOKEN = "8968114657:AAF0EsId27Gi7L7GxkRLdv6BpS-o8NHDpes"
-TELEGRAM_CHAT_ID = "1935100278"
+import os
+try:
+    from dotenv import load_dotenv
+    load_dotenv(PROJECT_ROOT / ".env")
+except ImportError:
+    pass
+
+# --- Telegram Config (Read from environment variables) ---
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
 
 
 def send_telegram_alert(detections, inference_time_ms, is_video=False):
-    """Send a smart human-readable Telegram alert after each inference."""
+    """Send a smart human-readable Telegram alert after each inference if credentials are provided."""
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        return
+
     def _send():
         try:
             import json as _json
@@ -230,13 +240,17 @@ async def predict(
 
 @app.get("/", response_class=HTMLResponse)
 def index_ui():
-    index_file = FRONTEND_DIR / "index.html"
-    if index_file.exists():
-        return FileResponse(str(index_file))
+    root_index = PROJECT_ROOT / "index.html"
+    frontend_index = FRONTEND_DIR / "index.html"
+    if root_index.exists():
+        return FileResponse(str(root_index))
+    if frontend_index.exists():
+        return FileResponse(str(frontend_index))
     return HTMLResponse("<h1>Kitchen Hygiene AI Frontend Not Found</h1>")
 
 
 if FRONTEND_DIR.exists():
+    app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend_assets")
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
 
 

@@ -3,7 +3,8 @@ from pathlib import Path
 from collections import Counter
 import yaml
 
-DATASET_ROOT = Path("D:/kitchen-hygiene-ai/dataset")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DATASET_ROOT = PROJECT_ROOT / "dataset"
 
 with open(DATASET_ROOT / "data.yaml", "r") as f:
     data_cfg = yaml.safe_load(f)

@@ -5,7 +5,9 @@ from ultralytics import YOLO
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_MODEL = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-gpu" / "weights" / "best.pt"
+DEFAULT_MODEL = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-final" / "weights" / "best.pt"
+if not DEFAULT_MODEL.exists():
+    DEFAULT_MODEL = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-gpu" / "weights" / "best.pt"
 DEFAULT_SOURCE = PROJECT_ROOT / "dataset" / "valid" / "images"
 
 
