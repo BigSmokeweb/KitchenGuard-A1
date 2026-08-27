@@ -401,8 +401,12 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
       }
 
       if (statCount) {
-        if (data.detections_count > 0) {
-          statCount.innerHTML = '<span style="color:#10b981;">🛡️ ' + data.detections_count + ' Safety & PPE Items Verified by Model</span>';
+        var vCount = data.violations_count || 0;
+        var ppeCount = data.detections_count || 0;
+        if (vCount > 0) {
+          statCount.innerHTML = '<span style="color:#ef4444;font-weight:700;">🚨 ' + vCount + ' Hygiene Violation' + (vCount > 1 ? 's' : '') + ' Detected!</span> &nbsp;|&nbsp; <span style="color:#10b981;">🛡️ ' + ppeCount + ' PPE Item' + (ppeCount > 1 ? 's' : '') + ' Verified</span>';
+        } else if (ppeCount > 0) {
+          statCount.innerHTML = '<span style="color:#10b981;font-weight:700;">✅ 100% Compliant — ' + ppeCount + ' PPE Items Verified, 0 Violations</span>';
         } else {
           statCount.innerHTML = '<span style="color:#10b981;">✅ Compliant - No Violations Detected</span>';
         }
@@ -413,14 +417,15 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
         if (data.detections && data.detections.length > 0) {
           data.detections.forEach(function (det) {
             var tag = document.createElement('span');
-            var isViolation = det.class_name.startsWith('no_');
-            var bg = isViolation ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)';
-            var border = isViolation ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)';
+            var isViolation = det.is_violation || det.class_name.startsWith('no_') || det.class_name.includes('less');
+            var bg = isViolation ? 'rgba(239,68,68,0.18)' : 'rgba(16,185,129,0.12)';
+            var border = isViolation ? '#ef4444' : 'rgba(16,185,129,0.3)';
             var color = isViolation ? '#ef4444' : '#10b981';
+            var icon = isViolation ? '⚠️ ' : '🛡️ ';
 
-            tag.style.cssText = 'background:' + bg + ';border:1px solid ' + border + ';color:' + color + ';padding:4px 10px;border-radius:6px;font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;';
+            tag.style.cssText = 'background:' + bg + ';border:1px solid ' + border + ';color:' + color + ';padding:5px 12px;border-radius:6px;font-size:0.88rem;display:inline-flex;align-items:center;gap:6px;font-weight:600;';
             var confPercent = Math.round(det.confidence * 100);
-            tag.innerHTML = '<strong>' + det.class_name + '</strong> <span style="opacity:0.85;font-size:0.78rem;">(' + confPercent + '%)</span>';
+            tag.innerHTML = icon + '<span>' + det.class_name.toUpperCase() + '</span> <span style="opacity:0.8;font-size:0.78rem;">(' + confPercent + '%)</span>';
             tagsContainer.appendChild(tag);
           });
         } else {

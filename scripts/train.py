@@ -42,6 +42,17 @@ def main():
 		project=str(OUTPUT_DIR),
 		name=args.name,
 		exist_ok=True,
+		optimizer="AdamW",
+		lr0=0.0015,
+		lrf=0.01,
+		cos_lr=True,
+		mixup=0.1,
+		close_mosaic=20,
+		scale=0.5,
+		fliplr=0.5,
+		patience=40,
+		save=True,
+		val=True,
 	)
 
 

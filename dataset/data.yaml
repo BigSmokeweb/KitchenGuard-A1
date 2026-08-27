@@ -1,10 +1,11 @@
-train: ../train/images
-val: ../valid/images
-test: ../test/images
-
-nc: 6
-names: ['hairnet', 'hairnetless', 'mask', 'maskless', 'with_glove', 'with_gloves']
-
+train: train/images
+val: valid/images
+test: test/images
+nc: 3
+names:
+- hairnet
+- mask
+- gloves
 roboflow:
   workspace: milind-sahu
   project: mask-hairnet-gloves-detection-9t5cf-t9bjf

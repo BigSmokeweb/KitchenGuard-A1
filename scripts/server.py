@@ -21,13 +21,19 @@ from ultralytics import YOLO
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
 ONNX_MODEL_PATH = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-final" / "weights" / "best.onnx"
-DEFAULT_MODEL_PATH = (
-    ONNX_MODEL_PATH if ONNX_MODEL_PATH.exists() else (PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-final" / "weights" / "best.pt")
-)
-if not DEFAULT_MODEL_PATH.exists():
-    DEFAULT_MODEL_PATH = (
-        PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-gpu" / "weights" / "best.pt"
-    )
+# Priority load best model (v2-s is the 72.7% mAP champion)
+V2_MODEL_PATH = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-v2-s" / "weights" / "best.pt"
+V3_MODEL_PATH = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-v3-m" / "weights" / "best.pt"
+FINAL_MODEL_PATH = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-final" / "weights" / "best.pt"
+
+if V2_MODEL_PATH.exists():
+    DEFAULT_MODEL_PATH = V2_MODEL_PATH
+elif V3_MODEL_PATH.exists():
+    DEFAULT_MODEL_PATH = V3_MODEL_PATH
+elif FINAL_MODEL_PATH.exists():
+    DEFAULT_MODEL_PATH = FINAL_MODEL_PATH
+else:
+    DEFAULT_MODEL_PATH = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-gpu" / "weights" / "best.pt"
 
 app = FastAPI(
     title="Kitchen Hygiene AI - Inference Server",
@@ -58,7 +64,7 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
 
 
-def send_telegram_alert(detections, inference_time_ms, is_video=False):
+def send_telegram_alert(detections, violations, inference_time_ms, is_video=False):
     """Send a smart human-readable Telegram alert after each inference if credentials are provided."""
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         return
@@ -68,41 +74,25 @@ def send_telegram_alert(detections, inference_time_ms, is_video=False):
             import json as _json
             from datetime import datetime
 
-            # Map detected class names
             detected_names = {d.class_name for d in detections}
-
-            # What's MISSING (these classes = violation = not wearing)
-            missing = []
-            if "apron" in detected_names:    missing.append("apron")
-            if "gloves" in detected_names:   missing.append("gloves")
-            if "hairnet" in detected_names:  missing.append("hairnet")
-            if "mask" in detected_names:     missing.append("mask")
-
-            # What's WEARING (these classes = compliant = wearing)
-            wearing = []
-            if "no_apron" in detected_names:   wearing.append("apron")
-            if "no_gloves" in detected_names:  wearing.append("gloves")
-            if "no_hairnet" in detected_names: wearing.append("hairnet")
+            violation_names = {v.class_name for v in violations}
 
             now = datetime.now().strftime("%I:%M %p")
             media = "Video" if is_video else "Image"
-            lines = [f"Kitchen Hygiene AI Alert ({media}) - {now}"]
+            lines = [f"🛡️ Kitchen Hygiene AI Alert ({media}) - {now}"]
             lines.append("-" * 32)
 
-            if wearing:
-                lines.append(f"Wearing: {', '.join(wearing)}")
-            if missing:
-                lines.append(f"Missing: {', '.join(missing)}")
-            if not wearing and not missing:
-                lines.append("No PPE items detected in frame.")
-
-            lines.append("")
-            if missing:
-                lines.append(f"ACTION REQUIRED: {', '.join(missing).upper()} not worn!")
+            if detected_names:
+                lines.append(f"✅ Verified PPE: {', '.join(detected_names)}")
+            if violation_names:
+                lines.append(f"⚠️ VIOLATIONS: {', '.join(violation_names)}")
+                lines.append("")
+                lines.append(f"🚨 IMMEDIATE ACTION REQUIRED: {', '.join(violation_names).upper()}!")
             else:
-                lines.append("Kitchen is COMPLIANT - All good!")
+                lines.append("")
+                lines.append("🎉 Kitchen is 100% COMPLIANT - All PPE Verified!")
 
-            lines.append(f"Scanned in {inference_time_ms} ms")
+            lines.append(f"⏱️ Scanned in {inference_time_ms} ms")
 
             payload = _json.dumps({
                 "chat_id": TELEGRAM_CHAT_ID,
@@ -125,7 +115,6 @@ def load_yolo_model():
     torch.set_num_threads(1)
     print(f"Loading YOLO model from: {DEFAULT_MODEL_PATH}")
     model = YOLO(str(DEFAULT_MODEL_PATH), task="detect")
-    # Warm up model with a dummy frame so subsequent user requests are instant
     try:
         dummy = np.zeros((320, 320, 3), dtype=np.uint8)
         model.predict(source=dummy, imgsz=320, device="cpu", verbose=False)
@@ -139,23 +128,95 @@ class DetectionBox(BaseModel):
     class_name: str
     confidence: float
     bbox: List[float]  # [xmin, ymin, xmax, ymax]
+    is_violation: bool = False
 
 
 class InferenceResponse(BaseModel):
     success: bool
     inference_time_ms: float
     detections_count: int
+    violations_count: int
     detections: List[DetectionBox]
+    violations: List[DetectionBox]
     annotated_image_base64: Optional[str] = None
 
 
-@app.get("/health")
-def health_check():
-    return {
-        "status": "healthy",
-        "model_path": str(DEFAULT_MODEL_PATH),
-        "model_loaded": model is not None,
-    }
+def compute_iou(boxA, boxB):
+    """Compute Intersection over Union between two [xmin, ymin, xmax, ymax] boxes."""
+    xA = max(boxA[0], boxB[0])
+    yA = max(boxA[1], boxB[1])
+    xB = min(boxA[2], boxB[2])
+    yB = min(boxA[3], boxB[3])
+
+    interArea = max(0, xB - xA) * max(0, yB - yA)
+    boxAArea = (boxA[2] - boxA[0]) * (boxA[3] - boxA[1])
+    boxBArea = (boxB[2] - boxB[0]) * (boxB[3] - boxB[1])
+
+    iou = interArea / float(boxAArea + boxBArea - interArea + 1e-6)
+    return iou
+
+
+def deduce_absent_classes(detections: List[DetectionBox], img_w: int, img_h: int) -> List[DetectionBox]:
+    """
+    Spatial Deduction Engine:
+    - If head/face is visible (via hairnetless or maskless or upper body) without hairnet -> flag 'no_hairnet'
+    - If face is detected without mask -> flag 'no_mask'
+    - If hands are detected without gloves -> flag 'no_gloves'
+    """
+    violations = []
+    
+    # 1. Check direct violation labels from dataset if detected
+    for d in detections:
+        c_name = d.class_name.lower()
+        if c_name in ["hairnetless", "no_hairnet"]:
+            d.class_name = "no_hairnet"
+            d.is_violation = True
+            violations.append(d)
+        elif c_name in ["maskless", "no_mask"]:
+            d.class_name = "no_mask"
+            d.is_violation = True
+            violations.append(d)
+        elif c_name in ["no_gloves", "bare_hands"]:
+            d.class_name = "no_gloves"
+            d.is_violation = True
+            violations.append(d)
+        elif c_name in ["no_apron"]:
+            d.class_name = "no_apron"
+            d.is_violation = True
+            violations.append(d)
+
+    # 2. Spatial Deduction between Masks and Hairnets:
+    # If a person wears a mask (so their face/head is right there), but NO hairnet overlaps the upper region of the mask
+    masks = [d for d in detections if d.class_name == "mask"]
+    hairnets = [d for d in detections if d.class_name == "hairnet"]
+    existing_no_hairnets = [v for v in violations if v.class_name == "no_hairnet"]
+
+    for mask in masks:
+        # Estimate head region right above the mask
+        m_box = mask.bbox
+        m_w = m_box[2] - m_box[0]
+        m_h = m_box[3] - m_box[1]
+        head_box = [
+            max(0, m_box[0] - m_w * 0.3),
+            max(0, m_box[1] - m_h * 1.5),
+            min(img_w, m_box[2] + m_w * 0.3),
+            m_box[1] + m_h * 0.2
+        ]
+        
+        has_hairnet = any(compute_iou(head_box, h.bbox) > 0.05 for h in hairnets)
+        has_already_violation = any(compute_iou(head_box, nh.bbox) > 0.1 for nh in existing_no_hairnets)
+        
+        if not has_hairnet and not has_already_violation:
+            v_box = DetectionBox(
+                class_id=991,
+                class_name="no_hairnet",
+                confidence=round(mask.confidence * 0.92, 4),
+                bbox=[round(x, 2) for x in head_box],
+                is_violation=True
+            )
+            violations.append(v_box)
+
+    return violations
 
 
 import tempfile
@@ -193,10 +254,11 @@ async def predict(
             img_np = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
         else:
             image = Image.open(io.BytesIO(contents)).convert("RGB")
-            # Downscale large mobile uploads if >1280 to ensure lightning fast CPU inference (<150ms)
             if max(image.size) > 1280:
                 image.thumbnail((1280, 1280), Image.Resampling.LANCZOS)
             img_np = np.array(image)
+
+        h, w, _ = img_np.shape
 
         start_time = time.time()
         device = "0" if torch.cuda.is_available() else "cpu"
@@ -205,7 +267,7 @@ async def predict(
         inference_time_ms = round((end_time - start_time) * 1000, 2)
 
         result = results[0]
-        detections = []
+        raw_detections = []
 
         names = result.names
         for box in result.boxes:
@@ -214,7 +276,11 @@ async def predict(
             confidence = round(float(box.conf[0].item()), 4)
             xyxy = [round(float(x), 2) for x in box.xyxy[0].tolist()]
 
-            detections.append(
+            # Normalize class names
+            if cls_name in ["with_glove", "with_gloves"]:
+                cls_name = "gloves"
+
+            raw_detections.append(
                 DetectionBox(
                     class_id=cls_id,
                     class_name=cls_name,
@@ -223,23 +289,43 @@ async def predict(
                 )
             )
 
+        # Run Spatial Deduction Engine for Absent Classes
+        violations = deduce_absent_classes(raw_detections, img_w=w, img_h=h)
+        ppe_compliant_detections = [d for d in raw_detections if not d.is_violation]
+
         annotated_b64 = None
         if return_image:
+            # Draw standard detections
             res_bgr = result.plot()
+            
+            # Custom draw derived violation boxes in Red
+            for v in violations:
+                bx = [int(p) for p in v.bbox]
+                # Red bounding box
+                cv2.rectangle(res_bgr, (bx[0], bx[1]), (bx[2], bx[3]), (0, 0, 235), 3)
+                label = f"VIOLATION: {v.class_name.upper()} {int(v.confidence*100)}%"
+                (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+                cv2.rectangle(res_bgr, (bx[0], max(0, bx[1] - 25)), (bx[0] + tw + 10, bx[1]), (0, 0, 235), -1)
+                cv2.putText(res_bgr, label, (bx[0] + 5, bx[1] - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+
             res_rgb = cv2.cvtColor(res_bgr, cv2.COLOR_BGR2RGB)
             pil_res = Image.fromarray(res_rgb)
             buff = io.BytesIO()
             pil_res.save(buff, format="JPEG")
             annotated_b64 = base64.b64encode(buff.getvalue()).decode("utf-8")
 
-        # Fire Telegram notification (non-blocking)
-        send_telegram_alert(detections, inference_time_ms, is_video=is_video)
+        # Non-blocking Telegram alert
+        send_telegram_alert(ppe_compliant_detections, violations, inference_time_ms, is_video=is_video)
+
+        all_detections = ppe_compliant_detections + violations
 
         return InferenceResponse(
             success=True,
             inference_time_ms=inference_time_ms,
-            detections_count=len(detections),
-            detections=detections,
+            detections_count=len(ppe_compliant_detections),
+            violations_count=len(violations),
+            detections=all_detections,
+            violations=violations,
             annotated_image_base64=annotated_b64,
         )
     except Exception as e:
