@@ -38,6 +38,10 @@ venv.bak/
 # Base YOLO Checkpoints (auto-downloaded by Ultralytics when needed)
 yolo*.pt
 
+# Dataset caches and label caches
+dataset/**/*.cache
+*.cache
+
 # Training outputs / test predictions / intermediate runs
 runs/
 inference_outputs/test_images/

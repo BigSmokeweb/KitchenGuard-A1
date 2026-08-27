@@ -21,19 +21,8 @@ from ultralytics import YOLO
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
 ONNX_MODEL_PATH = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-final" / "weights" / "best.onnx"
-# Priority load best model (v2-s is the 72.7% mAP champion)
-V2_MODEL_PATH = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-v2-s" / "weights" / "best.pt"
-V3_MODEL_PATH = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-v3-m" / "weights" / "best.pt"
-FINAL_MODEL_PATH = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-final" / "weights" / "best.pt"
-
-if V2_MODEL_PATH.exists():
-    DEFAULT_MODEL_PATH = V2_MODEL_PATH
-elif V3_MODEL_PATH.exists():
-    DEFAULT_MODEL_PATH = V3_MODEL_PATH
-elif FINAL_MODEL_PATH.exists():
-    DEFAULT_MODEL_PATH = FINAL_MODEL_PATH
-else:
-    DEFAULT_MODEL_PATH = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-gpu" / "weights" / "best.pt"
+# Load champion model
+DEFAULT_MODEL_PATH = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-model" / "weights" / "best.pt"
 
 app = FastAPI(
     title="Kitchen Hygiene AI - Inference Server",
