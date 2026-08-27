@@ -1,6 +1,13 @@
-train: train/images
-val: valid/images
-test: test/images
+train: ../train/images
+val: ../valid/images
+test: ../test/images
 
-nc: 7
-names: ['apron', 'gloves', 'hairnet', 'mask', 'no_apron', 'no_gloves', 'no_hairnet']
+nc: 6
+names: ['hairnet', 'hairnetless', 'mask', 'maskless', 'with_glove', 'with_gloves']
+
+roboflow:
+  workspace: milind-sahu
+  project: mask-hairnet-gloves-detection-9t5cf-t9bjf
+  version: 1
+  license: CC BY 4.0
+  url: https://app.roboflow.com/milind-sahu/mask-hairnet-gloves-detection-9t5cf-t9bjf/1
