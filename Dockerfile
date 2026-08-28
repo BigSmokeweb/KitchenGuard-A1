@@ -22,4 +22,6 @@ COPY inference_outputs/ ./inference_outputs/
 
 EXPOSE 8000
 
-CMD uvicorn scripts.server:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1
+# Railway healthcheck is configured in railway.json
+# Model takes ~15s to load — Railway's healthcheckTimeout handles this
+CMD ["uvicorn", "scripts.server:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
