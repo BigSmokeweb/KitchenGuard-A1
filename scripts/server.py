@@ -336,8 +336,10 @@ async def predict(
         )
     except Exception as e:
         import traceback
+        err_msg = f"{type(e).__name__}: {str(e)}"
+        print(f"[PREDICT ERROR] {err_msg}")
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=err_msg)
 
 
 @app.get("/", response_class=HTMLResponse)
