@@ -358,7 +358,7 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
 
       var errorData = {
         success: false,
-        error_message: 'Render backend took too long to wake up. Click below to try again!'
+        error_message: 'Inference request failed or took too long. Please try again!'
       };
       setTimeout(function () {
         displayDetectionResult(fileUrl, isImage, errorData);
