@@ -221,13 +221,13 @@ import tempfile
 @app.post("/predict", response_model=InferenceResponse)
 async def predict(
     file: UploadFile = File(...),
-    conf: Optional[float] = Form(0.25),
+    conf: Optional[float] = Form(0.15),
     iou: Optional[float] = Form(0.45),
     return_image: Optional[bool] = Form(True),
 ):
-    conf_val = conf if conf is not None else 0.25
-    iou_val = iou if iou is not None else 0.45
-    return_img_val = return_image if return_image is not None else True
+    conf_val = conf if (conf is not None and conf > 0) else 0.15
+    iou_val = iou if (iou is not None and iou > 0) else 0.45
+    return_img_val = True if return_image is None else return_image
 
     content_type = file.content_type or ""
     filename = file.filename or ""
