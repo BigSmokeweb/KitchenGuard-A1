@@ -6,10 +6,7 @@ import torch
 from ultralytics import YOLO
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-ONNX_MODEL = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-final" / "weights" / "best.onnx"
-DEFAULT_MODEL = (
-    ONNX_MODEL if ONNX_MODEL.exists() else (PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-final" / "weights" / "best.pt")
-)
+DEFAULT_MODEL = PROJECT_ROOT / "inference_outputs" / "kitchen-hygiene-model" / "weights" / "best.pt"
 DEFAULT_SOURCE = PROJECT_ROOT / "dataset" / "valid" / "images"
 
 

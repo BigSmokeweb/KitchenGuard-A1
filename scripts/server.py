@@ -257,6 +257,11 @@ async def predict(
 
         h, w, _ = img_np.shape
 
+        global model
+        if model is None:
+            print(f"Loading YOLO model on demand from: {DEFAULT_MODEL_PATH}")
+            model = YOLO(str(DEFAULT_MODEL_PATH), task="detect")
+
         start_time = time.time()
         device = "0" if torch.cuda.is_available() else "cpu"
         results = model.predict(source=img_np, conf=conf, iou=iou, imgsz=640, device=device, verbose=False)
