@@ -10,11 +10,11 @@ RUN apt-get update \
 # Python deps — PyTorch CPU first, then rest
 COPY requirements.txt .
 RUN pip install --no-cache-dir --timeout 300 \
-    torch==2.2.2 torchvision==0.17.2 \
+    torch==2.2.2 torchvision==0.17.2 "numpy<2.0.0,>=1.26.0" \
     --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir --timeout 300 -r requirements.txt
-# ultralytics pulls opencv-python (non-headless) which needs libxcb — force headless version
-RUN pip install --no-cache-dir opencv-python-headless --force-reinstall
+# ultralytics pulls opencv-python (non-headless) which needs libxcb — force headless version and lock numpy 1.x
+RUN pip install --no-cache-dir opencv-python-headless "numpy<2.0.0,>=1.26.0" --force-reinstall
 
 # App files
 COPY index.html .
