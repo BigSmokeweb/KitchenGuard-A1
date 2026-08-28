@@ -1,49 +1,26 @@
-# Pin to bookworm (Debian 12) — stable and well-tested on Railway
 FROM python:3.11-slim-bookworm
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
-
-# Install system dependencies
-# Note: libgl1 is NOT needed — we use opencv-python-headless
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libglib2.0-0 \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
 WORKDIR /app
 
-# ── Install Python dependencies first (cached layer) ─────────────────────────
-COPY requirements.txt .
+# System deps (minimal — headless opencv doesn't need libgl1)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libglib2.0-0 libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install CPU-only PyTorch first (largest dep — separate layer for caching)
-RUN pip install --timeout 120 --retries 5 \
+# Python deps — PyTorch CPU first, then rest
+COPY requirements.txt .
+RUN pip install --no-cache-dir --timeout 300 \
     torch==2.2.2 torchvision==0.17.2 \
     --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir --timeout 300 -r requirements.txt
 
-# Install remaining dependencies
-RUN pip install --timeout 120 --retries 5 -r requirements.txt
-
-# ── Copy application code ─────────────────────────────────────────────────────
+# App files
 COPY index.html .
 COPY frontend/ ./frontend/
 COPY scripts/ ./scripts/
 COPY inference_outputs/ ./inference_outputs/
-
-# Copy optional env example (actual .env should be passed at runtime)
 COPY .env.example .
 
-# ── Expose port ───────────────────────────────────────────────────────────────
 EXPOSE 8000
 
-# ── Health check ──────────────────────────────────────────────────────────────
-HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
-
-# ── Run server ────────────────────────────────────────────────────────────────
-# Railway injects $PORT at runtime — shell form allows env var expansion
 CMD uvicorn scripts.server:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1
