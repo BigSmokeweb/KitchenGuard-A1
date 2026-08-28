@@ -24,5 +24,5 @@ COPY inference_outputs/ ./inference_outputs/
 
 EXPOSE 8000
 
-# Shell form: allows $PORT env var expansion (Railway injects PORT at runtime)
-CMD sh -c "uvicorn scripts.server:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"
+# Port 8000 hardcoded — matches Railway domain config (Settings > Networking > Port 8000)
+CMD ["uvicorn", "scripts.server:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
