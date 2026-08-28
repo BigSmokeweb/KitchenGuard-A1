@@ -1,0 +1,50 @@
+# Git
+.git/
+.gitignore
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Dataset (not needed at runtime — model is pre-trained)
+dataset/
+
+# Training runs & temp outputs
+runs/
+inference_outputs/**/last.pt
+
+# Training utility scripts (not needed at runtime)
+scripts/train.py
+scripts/check_dataset.py
+scripts/check_gpu.py
+scripts/predict_image.py
+
+# Environment secrets
+.env
+.env.*
+
+# Base YOLO checkpoints
+yolo*.pt
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/

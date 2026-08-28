@@ -112,6 +112,12 @@ def load_yolo_model():
         print(f"Warmup notice: {e}")
 
 
+@app.get("/health")
+def health_check():
+    """Health check endpoint for Docker / load balancers."""
+    return {"status": "ok", "model_loaded": model is not None}
+
+
 class DetectionBox(BaseModel):
     class_id: int
     class_name: str
