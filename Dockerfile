@@ -21,10 +21,13 @@ WORKDIR /app
 # ── Install Python dependencies first (cached layer) ─────────────────────────
 COPY requirements.txt .
 
-# Install CPU-only PyTorch (much smaller image ~800MB vs ~3GB for CUDA)
-# Switch to the CUDA line below if deploying on a GPU host
-RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
-    pip install -r requirements.txt
+# Install CPU-only PyTorch first (largest dep — separate layer for caching)
+RUN pip install --timeout 120 --retries 5 \
+    torch==2.2.2 torchvision==0.17.2 \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Install remaining dependencies
+RUN pip install --timeout 120 --retries 5 -r requirements.txt
 
 # ── Copy application code ─────────────────────────────────────────────────────
 COPY index.html .
