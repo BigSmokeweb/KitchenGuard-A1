@@ -221,10 +221,14 @@ import tempfile
 @app.post("/predict", response_model=InferenceResponse)
 async def predict(
     file: UploadFile = File(...),
-    conf: float = Form(0.25),
-    iou: float = Form(0.45),
-    return_image: bool = Form(True),
+    conf: Optional[float] = Form(0.25),
+    iou: Optional[float] = Form(0.45),
+    return_image: Optional[bool] = Form(True),
 ):
+    conf_val = conf if conf is not None else 0.25
+    iou_val = iou if iou is not None else 0.45
+    return_img_val = return_image if return_image is not None else True
+
     content_type = file.content_type or ""
     filename = file.filename or ""
     is_video = content_type.startswith("video/") or filename.lower().endswith((".mp4", ".mov", ".avi", ".webm", ".mkv"))
@@ -264,7 +268,7 @@ async def predict(
 
         start_time = time.time()
         device = "0" if torch.cuda.is_available() else "cpu"
-        results = model.predict(source=img_np, conf=conf, iou=iou, imgsz=640, device=device, verbose=False)
+        results = model.predict(source=img_np, conf=conf_val, iou=iou_val, imgsz=640, device=device, verbose=False)
         end_time = time.time()
         inference_time_ms = round((end_time - start_time) * 1000, 2)
 
@@ -296,7 +300,7 @@ async def predict(
         ppe_compliant_detections = [d for d in raw_detections if not d.is_violation]
 
         annotated_b64 = None
-        if return_image:
+        if return_img_val:
             # Draw standard detections
             res_bgr = result.plot()
             

@@ -340,8 +340,15 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
       method: 'POST',
       body: formData
     })
-    .then(function (res) {
-      if (!res.ok) throw new Error('API server status ' + res.status);
+    .then(async function (res) {
+      if (!res.ok) {
+        var errDetail = '';
+        try {
+          var errJson = await res.json();
+          errDetail = errJson.detail || '';
+        } catch(e) {}
+        throw new Error('API server status ' + res.status + (errDetail ? ': ' + errDetail : ''));
+      }
       return res.json();
     })
     .then(function (data) {
@@ -358,7 +365,7 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
 
       var errorData = {
         success: false,
-        error_message: 'Inference request failed or took too long. Please try again!'
+        error_message: err.message || 'Inference request failed or took too long. Please try again!'
       };
       setTimeout(function () {
         displayDetectionResult(fileUrl, isImage, errorData);
