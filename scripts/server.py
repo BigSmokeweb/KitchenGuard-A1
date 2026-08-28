@@ -102,20 +102,22 @@ def send_telegram_alert(detections, violations, inference_time_ms, is_video=Fals
 def load_yolo_model():
     global model
     torch.set_num_threads(1)
-    print(f"Loading YOLO model from: {DEFAULT_MODEL_PATH}")
-    model = YOLO(str(DEFAULT_MODEL_PATH), task="detect")
     try:
-        dummy = np.zeros((320, 320, 3), dtype=np.uint8)
-        model.predict(source=dummy, imgsz=320, device="cpu", verbose=False)
-        print("YOLO model warmed up and ready for instant inference!")
+        print(f"Loading YOLO model from: {DEFAULT_MODEL_PATH}")
+        model = YOLO(str(DEFAULT_MODEL_PATH), task="detect")
+        print("YOLO model loaded successfully!")
     except Exception as e:
-        print(f"Warmup notice: {e}")
+        print(f"[WARNING] Model load failed: {e}")
+        model = None
 
 
 @app.get("/health")
 def health_check():
-    """Health check endpoint for Docker / load balancers."""
-    return {"status": "ok", "model_loaded": model is not None}
+    """Health check endpoint — responds immediately even if model is still loading."""
+    return {
+        "status": "ok",
+        "model_loaded": model is not None
+    }
 
 
 class DetectionBox(BaseModel):
