@@ -53,9 +53,12 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
 
 
-def send_telegram_alert(detections, violations, inference_time_ms, is_video=False):
-    """Send a smart human-readable Telegram alert after each inference if credentials are provided."""
-    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+def send_telegram_alert(detections, violations, inference_time_ms, is_video=False, annotated_img_bytes: Optional[bytes] = None):
+    """Send an instant human-readable Telegram alert with formatted message after each scan."""
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip() or TELEGRAM_BOT_TOKEN
+    chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip() or TELEGRAM_CHAT_ID
+
+    if not token or not chat_id:
         return
 
     def _send():
@@ -63,61 +66,100 @@ def send_telegram_alert(detections, violations, inference_time_ms, is_video=Fals
             import json as _json
             from datetime import datetime
 
-            detected_names = {d.class_name for d in detections}
-            violation_names = {v.class_name for v in violations}
+            detected_names = sorted(list({d.class_name for d in detections if not d.is_violation}))
+            violation_names = sorted(list({v.class_name for v in violations}))
 
-            now = datetime.now().strftime("%I:%M %p")
-            media = "Video" if is_video else "Image"
-            lines = [f"🛡️ Kitchen Hygiene AI Alert ({media}) - {now}"]
-            lines.append("-" * 32)
+            now = datetime.now().strftime("%I:%M:%S %p")
+            media = "Video Stream" if is_video else "Image Scan"
+
+            if violation_names:
+                header = f"🚨 *KITCHEN HYGIENE VIOLATION ALERT* 🚨"
+                status_line = f"⚠️ *Status:* NON-COMPLIANT ({len(violation_names)} violations)"
+            else:
+                header = f"🛡️ *KITCHEN COMPLIANCE REPORT* ✅"
+                status_line = f"✅ *Status:* 100% COMPLIANT"
+
+            lines = [
+                header,
+                f"🕒 *Time:* `{now}` | *Type:* `{media}`",
+                status_line,
+                "────────────────────────"
+            ]
 
             if detected_names:
-                lines.append(f"✅ Verified PPE: {', '.join(detected_names)}")
+                lines.append(f"🟢 *Verified PPE:* {', '.join([f'`{name}`' for name in detected_names])}")
             if violation_names:
-                lines.append(f"⚠️ VIOLATIONS: {', '.join(violation_names)}")
-                lines.append("")
-                lines.append(f"🚨 IMMEDIATE ACTION REQUIRED: {', '.join(violation_names).upper()}!")
+                lines.append(f"🔴 *Violations:* {', '.join([f'`{name}`' for name in violation_names])}")
+                lines.append(f"⚡ *Action Required:* Please notify station supervisor!")
             else:
-                lines.append("")
-                lines.append("🎉 Kitchen is 100% COMPLIANT - All PPE Verified!")
+                lines.append("🎉 All required kitchen safety apparel verified.")
 
-            lines.append(f"⏱️ Scanned in {inference_time_ms} ms")
+            lines.append(f"⏱️ *Latency:* `{inference_time_ms} ms` (YOLOv11s)")
 
+            msg_text = "\n".join(lines)
+
+            # Send Telegram Markdown message
             payload = _json.dumps({
-                "chat_id": TELEGRAM_CHAT_ID,
-                "text": "\n".join(lines)
+                "chat_id": chat_id,
+                "text": msg_text,
+                "parse_mode": "Markdown"
             }).encode("utf-8")
+
             req = urllib.request.Request(
-                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+                f"https://api.telegram.org/bot{token}/sendMessage",
                 data=payload,
                 headers={"Content-Type": "application/json"}
             )
-            urllib.request.urlopen(req, timeout=5)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                print(f"[Telegram] Alert sent successfully (status {resp.status})")
         except Exception as e:
-            print(f"[Telegram] Notification failed: {e}")
+            print(f"[Telegram Alert Error] {e}")
+
     threading.Thread(target=_send, daemon=True).start()
 
 
-@app.on_event("startup")
-def load_yolo_model():
-    global model
-    torch.set_num_threads(1)
+@app.get("/test-telegram")
+def test_telegram(token: Optional[str] = None, chat_id: Optional[str] = None):
+    """Instant test endpoint to verify Telegram credentials and message delivery."""
+    t = token or os.getenv("TELEGRAM_BOT_TOKEN", "").strip() or TELEGRAM_BOT_TOKEN
+    c = chat_id or os.getenv("TELEGRAM_CHAT_ID", "").strip() or TELEGRAM_CHAT_ID
+
+    if not t or not c:
+        return {
+            "success": False,
+            "error": "Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID environment variables.",
+            "instructions": "Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in Railway Variables tab."
+        }
+
     try:
-        print(f"Loading YOLO model from: {DEFAULT_MODEL_PATH}")
-        model = YOLO(str(DEFAULT_MODEL_PATH), task="detect")
-        print("YOLO model loaded successfully!")
+        import json as _json
+        test_msg = (
+            "🛡️ *KitchenGuard AI - Telegram Integration Verified!*\n"
+            "────────────────────────\n"
+            "✅ Your Telegram alert bot is connected and ready to broadcast live hygiene compliance and violation notices.\n"
+            "🚀 *Status:* Online & Monitoring"
+        )
+        payload = _json.dumps({
+            "chat_id": c,
+            "text": test_msg,
+            "parse_mode": "Markdown"
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            f"https://api.telegram.org/bot{t}/sendMessage",
+            data=payload,
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return {
+                "success": True,
+                "message": "Test notification sent! Check your Telegram chat."
+            }
     except Exception as e:
-        print(f"[WARNING] Model load failed: {e}")
-        model = None
-
-
-@app.get("/health")
-def health_check():
-    """Health check endpoint — responds immediately even if model is still loading."""
-    return {
-        "status": "ok",
-        "model_loaded": model is not None
-    }
+        return {
+            "success": False,
+            "error": str(e)
+        }
 
 
 class DetectionBox(BaseModel):
