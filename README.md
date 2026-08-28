@@ -1,111 +1,149 @@
 <div align="center">
 
 # 🛡️ KitchenGuard AI
-### Intelligent Computer Vision & Hygiene Compliance Monitoring for Commercial Kitchens
+### Real-Time Computer Vision & Automated Hygiene Compliance for Commercial Kitchens
 
-[![YOLOv11](https://img.shields.io/badge/Model-YOLOv11-10B981?style=for-the-badge&logo=yolo)](https://github.com/ultralytics/ultralytics)
+[![YOLOv11](https://img.shields.io/badge/Model-YOLOv11s_90%25_Precision-10B981?style=for-the-badge&logo=yolo)](https://github.com/ultralytics/ultralytics)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![ONNX](https://img.shields.io/badge/Inference-ONNX_Runtime-005CED?style=for-the-badge&logo=onnx)](https://onnxruntime.ai/)
-[![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?style=for-the-badge&logo=vercel)](https://kitchen-guard-a1.vercel.app)
+[![Docker](https://img.shields.io/badge/Deploy-Docker_&_Railway-005CED?style=for-the-badge&logo=docker)](https://railway.app)
+[![Telegram](https://img.shields.io/badge/Alerts-Telegram_Bot-229ED9?style=for-the-badge&logo=telegram)](https://telegram.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-**KitchenGuard AI** is a computer-vision powered safety and hygiene inspection platform designed to keep commercial kitchens audit-ready 24/7. It automatically detects Personal Protective Equipment (PPE) compliance, hygiene protocol breaches, and safety violations in real time from CCTV video feeds and image snapshots.
+**[Live Web App & AI Sandbox](https://kitchenguard-a1-production.up.railway.app)** • **[API Swagger Docs](https://kitchenguard-a1-production.up.railway.app/docs)**
 
 ---
+
+**KitchenGuard AI** is an intelligent, high-accuracy computer vision platform engineered for commercial kitchens, food processing plants, and culinary workstations. Powered by fine-tuned **YOLOv11** and an automated **Spatial Deduction Engine**, it verifies Personal Protective Equipment (PPE) adherence and flags hygiene infractions in real-time.
 
 </div>
 
-## 📌 Key Capabilities
+---
 
-- **Real-Time PPE Detection**: Instant multi-class object detection verifying `hairnet`, `apron`, `gloves`, `mask`, and flagging violations (`no_apron`, `no_gloves`, `no_hairnet`).
-- **Sub-Second Inference**: Optimized ONNX Runtime engine achieving **<150ms** CPU latency and **<30ms** GPU latency.
-- **Automated Telegram Alerts**: Instant notifications dispatched to floor managers with timestamped incident logs and violation summaries.
-- **Regulatory Alignment**: Designed to assist compliance benchmarking against **HACCP**, **FDA 21 CFR Part 11**, and **ISO 22000**.
-- **Interactive Web Sandbox**: Drag-and-drop live testing suite with visual bounding boxes, confidence tags, and hygiene telemetry.
+## ✨ Key Features & Capabilities
+
+- 🎯 **High-Precision Detection (~90% Precision / 89.2% mAP Gloves)**: Fine-tuned on specialized food prep datasets for robust, real-world generalization across varying lighting, angles, and skin tones.
+- 🧠 **Spatial Deduction & Absence Reasoning**: Automatically localizes worker facial/head geometry to flag missing PPE (`no_hairnet`, `no_mask`) in bold **Red**, even when zero PPE is worn.
+- ⚡ **Sub-250ms Low-Latency Inference**: Fully containerized and optimized with CPU-tailored PyTorch & OpenCV headless pipelines.
+- 📱 **Real-Time Telegram Incident Dispatch**: Automatic alert broadcast to kitchen managers with timestamped logs, PPE telemetry, and severity status.
+- 🎨 **Interactive AI Sandbox**: Drag-and-drop web dropzone supporting both single-frame photo analysis and full MP4 video clip scanning.
+- 📜 **Regulatory Alignment**: Designed to assist compliance benchmarking against **HACCP**, **FDA 21 CFR**, and **ISO 22000**.
 
 ---
 
-## 🏷️ Detected Classes
+## 🏷️ Detection Taxonomy
 
-The model is trained on custom commercial kitchen datasets with **7 detection classes**:
-
-| Class ID | Label | Category | Compliance Status |
-| :---: | :--- | :---: | :---: |
-| `0` | **`apron`** | PPE | ✅ Compliant |
-| `1` | **`gloves`** | PPE / Hygiene | ✅ Compliant |
-| `2` | **`hairnet`** | Headwear | ✅ Compliant |
-| `3` | **`mask`** | Hygiene | ✅ Compliant |
-| `4` | **`no_apron`** | Violation | ⚠️ Action Required |
-| `5` | **`no_gloves`** | Violation | ⚠️ Action Required |
-| `6` | **`no_hairnet`** | Violation | ⚠️ Action Required |
+| Category | Class / Flag | Color Tag | Behavior & Meaning |
+| :--- | :--- | :---: | :--- |
+| **PPE Compliance** | **`hairnet`** | 🟢 Green | Verified clean hairnet / chef hat covering hair |
+| **PPE Compliance** | **`mask`** | 🟢 Green | Verified protective face / beard mask covering mouth & nose |
+| **PPE Compliance** | **`gloves`** | 🟢 Green | Verified sanitary food-handling gloves (latex / nitrile) |
+| **Hygiene Infraction** | **`no_hairnet`** | 🔴 Red | Worker head detected without required hair covering |
+| **Hygiene Infraction** | **`no_mask`** | 🔴 Red | Worker face detected without protective face mask |
 
 ---
 
-## Quick Start
+## 📊 Model Architecture & Benchmarks
 
-### 1. Setup Environment
+The production system runs the **`kitchen-hygiene-model`** checkpoint (`YOLOv11s`):
+
+```
+Model Summary: 126 layers, 9.4M parameters, 640px resolution
+Latency: ~2.4 ms GPU (RTX 4060) / ~180 ms CPU (Cloud Container)
+```
+
+| Class | Precision (P) | Recall (R) | **mAP@0.50** | **mAP@0.50:0.95** |
+| :--- | :---: | :---: | :---: | :---: |
+| **`gloves`** | **`87.3%`** | **`83.8%`** | **`89.2%`** ⭐ | **`58.1%`** |
+| **`mask`** | **`85.3%`** | **`68.4%`** | **`74.5%`** | **`35.6%`** |
+| **`hairnet`** | **`77.4%`** | **`57.1%`** | **`63.6%`** | **`25.6%`** |
+| **Overall Peak** | **`90.08%`** | **`79.48%`** | **`77.53%`** | **`39.30%`** |
+
+---
+
+## 🚀 Quick Start (Local Setup)
+
+### 1. Clone & Install
 ```bash
 git clone https://github.com/BigSmokeweb/KitchenGuard-A1.git
 cd KitchenGuard-A1
 
-# Windows
+# Create virtual environment
 python -m venv venv
-.\venv\Scripts\Activate.ps1
 
+# Windows
+.\venv\Scripts\activate
 # Linux / macOS
-python3 -m venv venv
 source venv/bin/activate
 
+# Install dependencies
 pip install -r requirements.txt
 ```
 
----
-
-## Usage
-
-### Run CLI Inference
-Run detection on images and export annotated outputs to `inference_outputs/test_images/`:
+### 2. Start the Inference Server
 ```bash
-python scripts/predict_image.py dataset/valid/images/sample.jpg
+python -m uvicorn scripts.server:app --host 0.0.0.0 --port 8000 --reload
 ```
-
-### Start the API Server
-```bash
-python scripts/server.py
-```
-- API Docs: `http://localhost:8000/docs`
-- Health check: `http://localhost:8000/health`
-- Predict endpoint: `POST http://localhost:8000/predict` (accepts image/video uploads)
-
-### Train the Model
-```bash
-python scripts/train.py --model yolo11n.pt --epochs 100 --imgsz 640 --batch 16
-```
-
-### Check Dataset Structure
-```bash
-python scripts/check_dataset.py
-```
+Open **[http://localhost:8000](http://localhost:8000)** in your browser.
 
 ---
 
-## 🤖 Telegram Bot Notifications *(Optional)*
+## 🐳 Docker & Cloud Deployment
 
-To receive automated alerts on your phone whenever a kitchen safety infraction is detected:
+Build and run anywhere with the optimized production container:
 
-1. Its an alternative to alert manager to inform the staff in kitchen to follow the rules.
-2. This is free verion for realtime notifiction.
-3. For heavy traffic you can use other methods like Twillio and whatsapp.
-4. Create a bot using [@BotFather](https://t.me/BotFather) and obtain your `TELEGRAM_BOT_TOKEN`.
-5. Get your `TELEGRAM_CHAT_ID` using [@userinfobot](https://t.me/userinfobot).
-6. Create a `.env` file in the root directory:
-```env
-TELEGRAM_BOT_TOKEN=your_token_here
-TELEGRAM_CHAT_ID=your_chat_id_here
+```bash
+# Build the Docker image
+docker build -t kitchenguard-ai .
+
+# Run locally
+docker run -p 8000:8000 --env-file .env kitchenguard-ai
+```
+
+### One-Click Railway Deployment
+1. Connect your repository to **[Railway](https://railway.app)**.
+2. Railway auto-detects [`Dockerfile`](Dockerfile) and [`railway.json`](railway.json).
+3. Set your optional environment variables (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`) in the **Variables** tab.
+
+---
+
+## 📱 Telegram Alert Integration
+
+To receive instant push notifications whenever a kitchen safety violation is detected:
+
+1. Create a bot using [@BotFather](https://t.me/BotFather) and copy your `TELEGRAM_BOT_TOKEN`.
+2. Get your Chat ID by messaging [@userinfobot](https://t.me/userinfobot).
+3. Add to your local `.env` file (or Railway Dashboard):
+   ```env
+   TELEGRAM_BOT_TOKEN=your_bot_token_here
+   TELEGRAM_CHAT_ID=your_chat_id_here
+   ```
+4. Test delivery instantly at: `http://localhost:8000/test-telegram`
+
+---
+
+## 📁 Repository Structure
+
+```
+kitchen-hygiene-ai/
+├── dataset/                  # Cleaned 3-class dataset (train/valid/test)
+├── frontend/                 # UI assets, CSS design system & client logic
+├── inference_outputs/
+│   └── kitchen-hygiene-model/# Champion YOLOv11s weights (best.pt) & curves
+├── scripts/
+│   ├── server.py             # FastAPI backend + Spatial Deduction Engine
+│   ├── train.py              # Hyperparameter-tuned training pipeline
+│   ├── predict_image.py      # CLI inference tool
+│   ├── check_dataset.py      # Dataset validation utility
+│   └── check_gpu.py          # CUDA hardware checker
+├── index.html                # Responsive landing page & AI DropZone
+├── Dockerfile                # Production multi-stage container
+├── railway.json              # Cloud deployment orchestration config
+├── requirements.txt          # Production dependencies
+└── README.md                 # Project documentation
 ```
 
 ---
 
 ## 📄 License & Attribution
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details. Built by [Milind](https://github.com/BigSmokeweb).
+Distributed under the **MIT License**. Created & maintained by [Milind Sahu](https://github.com/BigSmokeweb).
