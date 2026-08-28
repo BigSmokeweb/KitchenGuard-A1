@@ -153,16 +153,21 @@ def compute_iou(boxA, boxB):
     return iou
 
 
-def deduce_absent_classes(detections: List[DetectionBox], img_w: int, img_h: int) -> List[DetectionBox]:
+# Load standard OpenCV Haar cascade for face detection
+_face_cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+_face_cascade = cv2.CascadeClassifier(_face_cascade_path) if cv2.data else None
+
+
+def deduce_absent_classes(detections: List[DetectionBox], img_w: int, img_h: int, img_rgb: Optional[np.ndarray] = None) -> List[DetectionBox]:
     """
     Spatial Deduction Engine:
-    - If head/face is visible (via hairnetless or maskless or upper body) without hairnet -> flag 'no_hairnet'
-    - If face is detected without mask -> flag 'no_mask'
-    - If hands are detected without gloves -> flag 'no_gloves'
+    1. Direct violation labels
+    2. Mask-to-Hairnet deduction
+    3. Direct Face/Head Anchor: detect human faces and flag missing hairnets / masks
     """
     violations = []
     
-    # 1. Check direct violation labels from dataset if detected
+    # 1. Check direct violation labels
     for d in detections:
         c_name = d.class_name.lower()
         if c_name in ["hairnetless", "no_hairnet"]:
@@ -177,19 +182,70 @@ def deduce_absent_classes(detections: List[DetectionBox], img_w: int, img_h: int
             d.class_name = "no_gloves"
             d.is_violation = True
             violations.append(d)
-        elif c_name in ["no_apron"]:
-            d.class_name = "no_apron"
-            d.is_violation = True
-            violations.append(d)
 
-    # 2. Spatial Deduction between Masks and Hairnets:
-    # If a person wears a mask (so their face/head is right there), but NO hairnet overlaps the upper region of the mask
+    # 2. Face Detection: If a person is present in the frame
+    detected_faces = []
+    if img_rgb is not None and _face_cascade is not None and not _face_cascade.empty():
+        try:
+            gray = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
+            faces = _face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=4, minSize=(40, 40))
+            for (fx, fy, fw, fh) in faces:
+                detected_faces.append([float(fx), float(fy), float(fx + fw), float(fy + fh)])
+        except Exception as e:
+            print(f"[Face Cascade Notice] {e}")
+
     masks = [d for d in detections if d.class_name == "mask"]
     hairnets = [d for d in detections if d.class_name == "hairnet"]
-    existing_no_hairnets = [v for v in violations if v.class_name == "no_hairnet"]
 
+    # 3. Check each detected face for missing hairnet & missing mask
+    for f_box in detected_faces:
+        f_w = f_box[2] - f_box[0]
+        f_h = f_box[3] - f_box[1]
+
+        # Head region above the face
+        head_box = [
+            max(0, f_box[0] - f_w * 0.2),
+            max(0, f_box[1] - f_h * 0.9),
+            min(img_w, f_box[2] + f_w * 0.2),
+            min(img_h, f_box[1] + f_h * 0.4)
+        ]
+
+        # Lower face region where mask should be
+        mask_area = [
+            max(0, f_box[0] - f_w * 0.1),
+            max(0, f_box[1] + f_h * 0.35),
+            min(img_w, f_box[2] + f_w * 0.1),
+            min(img_h, f_box[3] + f_h * 0.2)
+        ]
+
+        # A) Check missing hairnet
+        has_hairnet = any(compute_iou(head_box, h.bbox) > 0.05 for h in hairnets)
+        if not has_hairnet and not any(compute_iou(head_box, v.bbox) > 0.15 for v in violations if v.class_name == "no_hairnet"):
+            violations.append(
+                DetectionBox(
+                    class_id=991,
+                    class_name="no_hairnet",
+                    confidence=0.88,
+                    bbox=[round(x, 2) for x in head_box],
+                    is_violation=True
+                )
+            )
+
+        # B) Check missing mask
+        has_mask = any(compute_iou(mask_area, m.bbox) > 0.08 for m in masks)
+        if not has_mask and not any(compute_iou(mask_area, v.bbox) > 0.15 for v in violations if v.class_name == "no_mask"):
+            violations.append(
+                DetectionBox(
+                    class_id=992,
+                    class_name="no_mask",
+                    confidence=0.90,
+                    bbox=[round(x, 2) for x in mask_area],
+                    is_violation=True
+                )
+            )
+
+    # 4. Fallback Mask-to-Hairnet deduction (if face cascade didn't catch face but YOLO found mask)
     for mask in masks:
-        # Estimate head region right above the mask
         m_box = mask.bbox
         m_w = m_box[2] - m_box[0]
         m_h = m_box[3] - m_box[1]
@@ -199,19 +255,17 @@ def deduce_absent_classes(detections: List[DetectionBox], img_w: int, img_h: int
             min(img_w, m_box[2] + m_w * 0.3),
             m_box[1] + m_h * 0.2
         ]
-        
         has_hairnet = any(compute_iou(head_box, h.bbox) > 0.05 for h in hairnets)
-        has_already_violation = any(compute_iou(head_box, nh.bbox) > 0.1 for nh in existing_no_hairnets)
-        
-        if not has_hairnet and not has_already_violation:
-            v_box = DetectionBox(
-                class_id=991,
-                class_name="no_hairnet",
-                confidence=round(mask.confidence * 0.92, 4),
-                bbox=[round(x, 2) for x in head_box],
-                is_violation=True
+        if not has_hairnet and not any(compute_iou(head_box, v.bbox) > 0.15 for v in violations if v.class_name == "no_hairnet"):
+            violations.append(
+                DetectionBox(
+                    class_id=991,
+                    class_name="no_hairnet",
+                    confidence=round(mask.confidence * 0.92, 4),
+                    bbox=[round(x, 2) for x in head_box],
+                    is_violation=True
+                )
             )
-            violations.append(v_box)
 
     return violations
 
@@ -295,8 +349,8 @@ async def predict(
                 )
             )
 
-        # Run Spatial Deduction Engine for Absent Classes
-        violations = deduce_absent_classes(raw_detections, img_w=w, img_h=h)
+        # Run Spatial Deduction Engine for Absent Classes (with face/head detection)
+        violations = deduce_absent_classes(raw_detections, img_w=w, img_h=h, img_rgb=img_np)
         ppe_compliant_detections = [d for d in raw_detections if not d.is_violation]
 
         annotated_b64 = None
