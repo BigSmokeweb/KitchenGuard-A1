@@ -48,9 +48,12 @@ try:
 except ImportError:
     pass
 
-# --- Telegram Config (Read from environment variables) ---
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+# --- Telegram Config (Read from environment variables with fallback defaults) ---
+DEFAULT_TELEGRAM_TOKEN = "8968114657:AAF0EsId27Gi7L7GxkRLdv6BpS-o8NHDpes"
+DEFAULT_TELEGRAM_CHAT_ID = "1935100278"
+
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip() or DEFAULT_TELEGRAM_TOKEN
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip() or DEFAULT_TELEGRAM_CHAT_ID
 
 
 def send_telegram_alert(detections, violations, inference_time_ms, is_video=False, annotated_img_bytes: Optional[bytes] = None):
