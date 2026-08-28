@@ -48,6 +48,28 @@ try:
 except ImportError:
     pass
 
+
+@app.on_event("startup")
+def load_yolo_model():
+    global model
+    torch.set_num_threads(1)
+    try:
+        print(f"Loading YOLO model from: {DEFAULT_MODEL_PATH}")
+        model = YOLO(str(DEFAULT_MODEL_PATH), task="detect")
+        print("YOLO model loaded successfully!")
+    except Exception as e:
+        print(f"[WARNING] Model load failed: {e}")
+        model = None
+
+
+@app.get("/health")
+def health_check():
+    """Health check endpoint for Railway / load balancers."""
+    return {
+        "status": "ok",
+        "model_loaded": model is not None
+    }
+
 # --- Telegram Config (Read strictly from environment variables) ---
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
