@@ -19,7 +19,6 @@ COPY index.html .
 COPY frontend/ ./frontend/
 COPY scripts/ ./scripts/
 COPY inference_outputs/ ./inference_outputs/
-COPY .env.example .
 
 EXPOSE 8000
 
