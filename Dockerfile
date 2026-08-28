@@ -13,6 +13,8 @@ RUN pip install --no-cache-dir --timeout 300 \
     torch==2.2.2 torchvision==0.17.2 \
     --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir --timeout 300 -r requirements.txt
+# ultralytics pulls opencv-python (non-headless) which needs libxcb — force headless version
+RUN pip install --no-cache-dir opencv-python-headless --force-reinstall
 
 # App files
 COPY index.html .
