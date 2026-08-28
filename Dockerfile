@@ -1,6 +1,5 @@
-# ── Stage 1: Base image ────────────────────────────────────────────────────────
-# Using slim Python image for smallest possible final size
-FROM python:3.11-slim
+# Pin to bookworm (Debian 12) — stable and well-tested on Railway
+FROM python:3.11-slim-bookworm
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -8,10 +7,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies required by OpenCV and torch
+# Install system dependencies
+# Note: libgl1 is NOT needed — we use opencv-python-headless
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
-    libgl1 \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
