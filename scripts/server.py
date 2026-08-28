@@ -221,11 +221,11 @@ import tempfile
 @app.post("/predict", response_model=InferenceResponse)
 async def predict(
     file: UploadFile = File(...),
-    conf: Optional[float] = Form(0.15),
+    conf: Optional[float] = Form(0.35),
     iou: Optional[float] = Form(0.45),
     return_image: Optional[bool] = Form(True),
 ):
-    conf_val = conf if (conf is not None and conf > 0) else 0.15
+    conf_val = conf if (conf is not None and conf > 0) else 0.35
     iou_val = iou if (iou is not None and iou > 0) else 0.45
     return_img_val = True if return_image is None else return_image
 
@@ -301,23 +301,22 @@ async def predict(
 
         annotated_b64 = None
         if return_img_val:
-            # Draw standard detections
-            res_bgr = result.plot()
+            # result.plot() returns RGB when input is RGB
+            res_rgb = result.plot()
             
-            # Custom draw derived violation boxes in Red
+            # Custom draw derived violation boxes in Red (RGB: [235, 0, 0])
             for v in violations:
                 bx = [int(p) for p in v.bbox]
-                # Red bounding box
-                cv2.rectangle(res_bgr, (bx[0], bx[1]), (bx[2], bx[3]), (0, 0, 235), 3)
+                # Red bounding box (RGB)
+                cv2.rectangle(res_rgb, (bx[0], bx[1]), (bx[2], bx[3]), (235, 0, 0), 3)
                 label = f"VIOLATION: {v.class_name.upper()} {int(v.confidence*100)}%"
                 (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
-                cv2.rectangle(res_bgr, (bx[0], max(0, bx[1] - 25)), (bx[0] + tw + 10, bx[1]), (0, 0, 235), -1)
-                cv2.putText(res_bgr, label, (bx[0] + 5, bx[1] - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                cv2.rectangle(res_rgb, (bx[0], max(0, bx[1] - 25)), (bx[0] + tw + 10, bx[1]), (235, 0, 0), -1)
+                cv2.putText(res_rgb, label, (bx[0] + 5, bx[1] - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
-            res_rgb = cv2.cvtColor(res_bgr, cv2.COLOR_BGR2RGB)
             pil_res = Image.fromarray(res_rgb)
             buff = io.BytesIO()
-            pil_res.save(buff, format="JPEG")
+            pil_res.save(buff, format="JPEG", quality=90)
             annotated_b64 = base64.b64encode(buff.getvalue()).decode("utf-8")
 
         # Non-blocking Telegram alert

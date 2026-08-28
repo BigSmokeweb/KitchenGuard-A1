@@ -335,7 +335,7 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
 
     var formData = new FormData();
     formData.append('file', file);
-    formData.append('conf', '0.15');
+    formData.append('conf', '0.35');
     formData.append('return_image', 'true');
 
     fetch(API_BASE_URL + '/predict', {
