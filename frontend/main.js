@@ -330,7 +330,8 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
       scanProgress.style.width = progress + '%';
     }, 150);
 
-    var API_BASE_URL = (window.location.origin && window.location.origin.includes(':8000')) ? '' : 'https://kitchenguard-api-muhp.onrender.com';
+    var isLocalOrSelfHosted = window.location.origin && (window.location.origin.includes(':8000') || window.location.origin.includes('railway.app'));
+    var API_BASE_URL = isLocalOrSelfHosted ? '' : 'https://kitchenguard-a1-production.up.railway.app';
 
     var formData = new FormData();
     formData.append('file', file);
@@ -437,7 +438,7 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
       }
     } else if (summaryBox && data && !data.success) {
       summaryBox.hidden = false;
-      if (statSpeed) statSpeed.textContent = 'Render Backend Status';
+      if (statSpeed) statSpeed.textContent = 'Cloud AI Status';
       if (statCount) statCount.innerHTML = '<span style="color:#f59e0b;">⏳ ' + (data.error_message || 'Connecting to model...') + '</span>';
       if (tagsContainer) tagsContainer.innerHTML = '';
     } else if (summaryBox) {
