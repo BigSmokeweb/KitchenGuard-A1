@@ -59,7 +59,7 @@ function loadAuditHistory() {
   if (!tableBody) return;
 
   if (!authToken) {
-    tableBody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:#94a3b8;">Please sign in to view your secure audit logs.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:#94a3b8;">Please sign in to view your secure audit logs.</td></tr>';
     return;
   }
 
@@ -71,7 +71,7 @@ function loadAuditHistory() {
   .then(function (res) { return res.json(); })
   .then(function (data) {
     if (!data.scans || data.scans.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:#94a3b8;">No audit scans recorded yet. Upload a photo or video above to create your first log entry!</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:#94a3b8;">No audit scans recorded yet. Upload a photo or video above to create your first log entry!</td></tr>';
       return;
     }
 
@@ -99,6 +99,8 @@ function loadAuditHistory() {
         ? '<button type="button" class="btn-view-snapshot" data-url="' + scan.snapshot_url + '" data-caption="' + scan.created_at + ' — ' + (scan.is_compliant ? '100% Compliant' : 'Violations Detected') + '" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.8rem;">🔍 View Image</button>'
         : '<span style="color:#cbd5e1;">None</span>';
 
+      var pdfBtn = '<button type="button" class="btn-download-pdf" data-id="' + scan.id + '" style="background:' + (scan.is_compliant ? '#f0fdf4;color:#16a34a;border:1px solid #bbf7d0' : '#fef2f2;color:#dc2626;border:1px solid #fecaca') + ';padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;font-size:0.8rem;display:inline-flex;align-items:center;gap:4px;">📄 ' + (scan.is_compliant ? 'Audit Cert PDF' : 'Legal Citation PDF') + '</button>';
+
       row.innerHTML = 
         '<td style="padding:12px 16px;white-space:nowrap;font-size:0.82rem;color:#475569;">' + scan.created_at + '</td>' +
         '<td style="padding:12px 16px;font-weight:600;color:var(--navy);">' + scan.user + '</td>' +
@@ -106,9 +108,43 @@ function loadAuditHistory() {
         '<td style="padding:12px 16px;">' + statusBadge + '</td>' +
         '<td style="padding:12px 16px;">' + violationsText + '</td>' +
         '<td style="padding:12px 16px;">' + telegramBadge + '</td>' +
-        '<td style="padding:12px 16px;text-align:center;">' + snapshotBtn + '</td>';
+        '<td style="padding:12px 16px;text-align:center;">' + snapshotBtn + '</td>' +
+        '<td style="padding:12px 16px;text-align:center;">' + pdfBtn + '</td>';
 
       tableBody.appendChild(row);
+    });
+
+    // Wire PDF download buttons with auth token
+    document.querySelectorAll('.btn-download-pdf').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var scanId = btn.getAttribute('data-id');
+        btn.textContent = '⏳ Building PDF...';
+        
+        var pdfUrl = getApiBaseUrl() + '/api/scans/' + scanId + '/pdf';
+        fetch(pdfUrl, {
+          headers: authToken ? { 'Authorization': 'Bearer ' + authToken } : {}
+        })
+        .then(function (res) {
+          if (!res.ok) throw new Error('Could not generate PDF citation');
+          return res.blob();
+        })
+        .then(function (blob) {
+          var blobUrl = window.URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = 'KitchenGuard_Citation_Scan_' + scanId + '.pdf';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(blobUrl);
+          btn.innerHTML = '📄 Downloaded';
+          setTimeout(function() { btn.innerHTML = '📄 Citation PDF'; }, 2000);
+        })
+        .catch(function (err) {
+          alert('Error downloading PDF: ' + err.message);
+          btn.innerHTML = '📄 Legal Citation PDF';
+        });
+      });
     });
 
     // Wire snapshot preview buttons
