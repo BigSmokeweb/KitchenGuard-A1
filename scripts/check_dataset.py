@@ -1,6 +1,6 @@
-import os
-from pathlib import Path
 from collections import Counter
+from pathlib import Path
+
 import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +48,10 @@ for split in ["train", "valid", "test"]:
     print(f"  Empty label files (no annotations): {empty_label_files}")
     print(f"  Class distribution:")
     for class_id, count in sorted(class_counter.items()):
-        name = class_names[class_id] if class_id < len(class_names) else f"UNKNOWN({class_id})"
+        name = (
+            class_names[class_id]
+            if class_id < len(class_names)
+            else f"UNKNOWN({class_id})"
+        )
         print(f"    {name}: {count}")
     print()
