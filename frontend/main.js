@@ -3,6 +3,284 @@
    ============================================================ */
 'use strict';
 
+/* ---------- Authentication & Audit History State Manager ---------- */
+var currentUser = null;
+var authToken = localStorage.getItem('kg_token') || null;
+
+function getApiBaseUrl() {
+  var isLocalOrSelfHosted = window.location.origin && (window.location.origin.includes(':8000') || window.location.origin.includes('railway.app'));
+  return isLocalOrSelfHosted ? '' : 'https://kitchenguard-a1-production.up.railway.app';
+}
+
+function updateNavAuthState() {
+  var navAuth = document.getElementById('nav-auth-container');
+  var navUser = document.getElementById('nav-user-container');
+  var navUserName = document.getElementById('nav-user-name');
+
+  if (authToken && currentUser) {
+    if (navAuth) navAuth.style.display = 'none';
+    if (navUser) navUser.style.display = 'flex';
+    if (navUserName) navUserName.textContent = '👤 ' + currentUser.username;
+  } else {
+    if (navAuth) navAuth.style.display = 'flex';
+    if (navUser) navUser.style.display = 'none';
+  }
+}
+
+function checkUserSession() {
+  if (!authToken) {
+    updateNavAuthState();
+    loadAuditHistory();
+    return;
+  }
+  fetch(getApiBaseUrl() + '/auth/me', {
+    headers: { 'Authorization': 'Bearer ' + authToken }
+  })
+  .then(function (res) {
+    if (!res.ok) throw new Error('Session expired');
+    return res.json();
+  })
+  .then(function (data) {
+    currentUser = data;
+    updateNavAuthState();
+    loadAuditHistory();
+  })
+  .catch(function () {
+    localStorage.removeItem('kg_token');
+    authToken = null;
+    currentUser = null;
+    updateNavAuthState();
+    loadAuditHistory();
+  });
+}
+
+function loadAuditHistory() {
+  var tableBody = document.getElementById('history-table-body');
+  if (!tableBody) return;
+
+  if (!authToken) {
+    tableBody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:#94a3b8;">Please sign in to view your secure audit logs.</td></tr>';
+    return;
+  }
+
+  var headers = {
+    'Authorization': 'Bearer ' + authToken
+  };
+
+  fetch(getApiBaseUrl() + '/api/scans?limit=25', { headers: headers })
+  .then(function (res) { return res.json(); })
+  .then(function (data) {
+    if (!data.scans || data.scans.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:#94a3b8;">No audit scans recorded yet. Upload a photo or video above to create your first log entry!</td></tr>';
+      return;
+    }
+
+    tableBody.innerHTML = '';
+    data.scans.forEach(function (scan) {
+      var row = document.createElement('tr');
+      row.style.borderBottom = '1px solid #E2E8F0';
+
+      var statusBadge = scan.is_compliant
+        ? '<span style="background:rgba(16,185,129,0.12);color:#10B981;padding:4px 8px;border-radius:6px;font-weight:600;">✅ COMPLIANT</span>'
+        : '<span style="background:rgba(239,68,68,0.12);color:#EF4444;padding:4px 8px;border-radius:6px;font-weight:600;">🚨 VIOLATION</span>';
+
+      var violationsText = '-';
+      if (scan.violations && scan.violations.length > 0) {
+        violationsText = scan.violations.map(function (v) {
+          return '<span style="display:inline-block;background:#fee2e2;color:#b91c1c;padding:2px 6px;border-radius:4px;font-size:0.75rem;font-weight:600;margin:2px;">⚠️ ' + v.type.toUpperCase() + ' (' + Math.round(v.confidence * 100) + '%)</span>';
+        }).join(' ');
+      }
+
+      var telegramBadge = scan.notification_sent
+        ? '<span style="color:#10B981;font-weight:600;display:inline-flex;align-items:center;gap:4px;">🟢 Delivered</span>'
+        : '<span style="color:#94a3b8;display:inline-flex;align-items:center;gap:4px;">⚪ Disabled</span>';
+
+      var snapshotBtn = scan.snapshot_url
+        ? '<button type="button" class="btn-view-snapshot" data-url="' + scan.snapshot_url + '" data-caption="' + scan.created_at + ' — ' + (scan.is_compliant ? '100% Compliant' : 'Violations Detected') + '" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.8rem;">🔍 View Image</button>'
+        : '<span style="color:#cbd5e1;">None</span>';
+
+      row.innerHTML = 
+        '<td style="padding:12px 16px;white-space:nowrap;font-size:0.82rem;color:#475569;">' + scan.created_at + '</td>' +
+        '<td style="padding:12px 16px;font-weight:600;color:var(--navy);">' + scan.user + '</td>' +
+        '<td style="padding:12px 16px;text-transform:capitalize;color:#475569;">' + scan.media_type + '</td>' +
+        '<td style="padding:12px 16px;">' + statusBadge + '</td>' +
+        '<td style="padding:12px 16px;">' + violationsText + '</td>' +
+        '<td style="padding:12px 16px;">' + telegramBadge + '</td>' +
+        '<td style="padding:12px 16px;text-align:center;">' + snapshotBtn + '</td>';
+
+      tableBody.appendChild(row);
+    });
+
+    // Wire snapshot preview buttons
+    document.querySelectorAll('.btn-view-snapshot').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var imgUrl = btn.getAttribute('data-url');
+        var caption = btn.getAttribute('data-caption');
+        var snapModal = document.getElementById('snapshot-modal');
+        var snapImg = document.getElementById('snapshot-modal-img');
+        var snapCaption = document.getElementById('snapshot-modal-caption');
+        if (snapModal && snapImg) {
+          snapImg.src = getApiBaseUrl() + imgUrl;
+          if (snapCaption) snapCaption.textContent = caption;
+          snapModal.style.display = 'flex';
+        }
+      });
+    });
+  })
+  .catch(function (err) {
+    console.warn("Could not fetch audit history:", err);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  checkUserSession();
+
+  // Snapshot modal close
+  var snapModal = document.getElementById('snapshot-modal');
+  var snapClose = document.getElementById('snapshot-modal-close');
+  if (snapModal && snapClose) {
+    snapClose.addEventListener('click', function () { snapModal.style.display = 'none'; });
+    snapModal.addEventListener('click', function (e) {
+      if (e.target === snapModal) snapModal.style.display = 'none';
+    });
+  }
+
+  // Refresh history button
+  var btnRefresh = document.getElementById('btn-refresh-history');
+  if (btnRefresh) {
+    btnRefresh.addEventListener('click', function () {
+      btnRefresh.textContent = 'Refreshing...';
+      loadAuditHistory();
+      setTimeout(function () { btnRefresh.textContent = '🔄 Refresh Logs'; }, 500);
+    });
+  }
+
+  // Auth modal triggers
+  var authModal = document.getElementById('auth-modal');
+  var authClose = document.getElementById('auth-modal-close');
+  var btnSignin = document.getElementById('nav-signin');
+  var btnRegister = document.getElementById('nav-get-started');
+  var btnLogout = document.getElementById('nav-logout');
+  var authForm = document.getElementById('auth-form');
+  var authTitle = document.getElementById('auth-modal-title');
+  var authSubtitle = document.getElementById('auth-modal-subtitle');
+  var authSubmitBtn = document.getElementById('auth-submit-btn');
+  var authSwitchLink = document.getElementById('auth-switch-link');
+  var authSwitchText = document.getElementById('auth-switch-text');
+  var emailGroup = document.getElementById('auth-email-group');
+  var errorMsg = document.getElementById('auth-error-msg');
+  var isRegisterMode = false;
+
+  function setAuthMode(register) {
+    isRegisterMode = register;
+    if (errorMsg) errorMsg.style.display = 'none';
+    if (isRegisterMode) {
+      authTitle.textContent = 'Create KitchenGuard Account';
+      authSubtitle.textContent = 'Register to store all kitchen inspection audits in your personal database.';
+      authSubmitBtn.textContent = 'Register & Sign In';
+      authSwitchText.textContent = 'Already have an account?';
+      authSwitchLink.textContent = 'Sign in';
+      if (emailGroup) emailGroup.style.display = 'flex';
+    } else {
+      authTitle.textContent = 'Sign In to KitchenGuard';
+      authSubtitle.textContent = 'Access your kitchen\'s audit history and live telemetry.';
+      authSubmitBtn.textContent = 'Sign In';
+      authSwitchText.textContent = 'Don\'t have an account?';
+      authSwitchLink.textContent = 'Register free';
+      if (emailGroup) emailGroup.style.display = 'none';
+    }
+  }
+
+  if (btnSignin && authModal) {
+    btnSignin.addEventListener('click', function (e) {
+      e.preventDefault();
+      setAuthMode(false);
+      authModal.style.display = 'flex';
+    });
+  }
+
+  if (btnRegister && authModal) {
+    btnRegister.addEventListener('click', function (e) {
+      e.preventDefault();
+      setAuthMode(true);
+      authModal.style.display = 'flex';
+    });
+  }
+
+  if (authClose && authModal) {
+    authClose.addEventListener('click', function () { authModal.style.display = 'none'; });
+    authModal.addEventListener('click', function (e) {
+      if (e.target === authModal) authModal.style.display = 'none';
+    });
+  }
+
+  if (authSwitchLink) {
+    authSwitchLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      setAuthMode(!isRegisterMode);
+    });
+  }
+
+  if (btnLogout) {
+    btnLogout.addEventListener('click', function () {
+      localStorage.removeItem('kg_token');
+      authToken = null;
+      currentUser = null;
+      updateNavAuthState();
+      loadAuditHistory();
+    });
+  }
+
+  if (authForm) {
+    authForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var username = document.getElementById('auth-username-input').value.trim();
+      var password = document.getElementById('auth-password-input').value;
+      var email = document.getElementById('auth-email-input').value.trim();
+
+      if (!username || !password) return;
+
+      var endpoint = isRegisterMode ? '/auth/signup' : '/auth/login';
+      var payload = { username: username, password: password };
+      if (isRegisterMode && email) payload.email = email;
+
+      authSubmitBtn.textContent = 'Authenticating...';
+      if (errorMsg) errorMsg.style.display = 'none';
+
+      fetch(getApiBaseUrl() + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(async function (res) {
+        if (!res.ok) {
+          var errData = {};
+          try { errData = await res.json(); } catch(e) {}
+          throw new Error(errData.detail || 'Authentication failed');
+        }
+        return res.json();
+      })
+      .then(function (data) {
+        localStorage.setItem('kg_token', data.access_token);
+        authToken = data.access_token;
+        currentUser = data.user;
+        updateNavAuthState();
+        authModal.style.display = 'none';
+        loadAuditHistory();
+      })
+      .catch(function (err) {
+        if (errorMsg) {
+          errorMsg.textContent = err.message;
+          errorMsg.style.display = 'block';
+        }
+      })
+      .finally(function () {
+        authSubmitBtn.textContent = isRegisterMode ? 'Register & Sign In' : 'Sign In';
+      });
+    });
+  }
+});
+
 /* ---------- Media Switcher (Image vs Video) ---------- */
 (function () {
   var tabImage = document.getElementById('tab-image');
@@ -338,8 +616,14 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
     formData.append('conf', '0.35');
     formData.append('return_image', 'true');
 
+    var fetchHeaders = {};
+    if (authToken) {
+      fetchHeaders['Authorization'] = 'Bearer ' + authToken;
+    }
+
     fetch(API_BASE_URL + '/predict', {
       method: 'POST',
+      headers: fetchHeaders,
       body: formData
     })
     .then(async function (res) {
@@ -358,6 +642,7 @@ document.querySelectorAll('a[href^="#"]').forEach(function (a) {
       scanProgress.style.width = '100%';
       setTimeout(function () {
         displayDetectionResult(fileUrl, isImage, data);
+        loadAuditHistory();
       }, 150);
     })
     .catch(function (err) {

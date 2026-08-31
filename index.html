@@ -33,9 +33,13 @@
         <li><a href="#features" class="nav__link">Features</a></li>
         <li><a href="#how-it-works" class="nav__link">How it works</a></li>
       </ul>
-      <div class="nav__cta">
+      <div class="nav__cta" id="nav-auth-container">
         <a href="#" class="btn btn--ghost" id="nav-signin">Sign in</a>
-        <a href="#" class="btn btn--primary" id="nav-get-started">Get started free</a>
+        <a href="#" class="btn btn--primary" id="nav-get-started">Register</a>
+      </div>
+      <div class="nav__user" id="nav-user-container" style="display:none;align-items:center;gap:10px;">
+        <span id="nav-user-name" style="font-weight:600;font-size:0.9rem;color:var(--navy);"></span>
+        <button type="button" class="btn btn--ghost btn--sm" id="nav-logout" style="color:#ef4444;font-size:0.8rem;padding:4px 8px;">Logout</button>
       </div>
       <button class="nav__hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false"
         aria-controls="mobile-menu">
@@ -358,13 +362,95 @@
             </div>
           </div>
         </div>
-
       </div>
     </section>
 
+    <!-- AUDIT HISTORY & VIOLATION LOGS SECTION -->
+    <section class="section" id="audit-history-section" style="background:#F8FAFC;padding:60px 0;border-top:1px solid #E2E8F0;">
+      <div class="container">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="font-size:1.75rem;color:var(--navy);margin-bottom:4px;">📋 Database Audit History &amp; Violation Logs</h2>
+            <p style="color:var(--slate);font-size:0.95rem;">Every scanned image and video is automatically recorded with timestamps, detected infractions, and Telegram notification status.</p>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button type="button" class="btn btn--outline btn--sm" id="btn-refresh-history">🔄 Refresh Logs</button>
+          </div>
+        </div>
+
+        <!-- History Table Container -->
+        <div style="background:#FFFFFF;border-radius:12px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,0.05);overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;text-align:left;font-size:0.875rem;">
+            <thead>
+              <tr style="background:#F1F5F9;border-bottom:1px solid #E2E8F0;color:#475569;font-weight:600;">
+                <th style="padding:12px 16px;">Scan Time</th>
+                <th style="padding:12px 16px;">Inspector / User</th>
+                <th style="padding:12px 16px;">Media Type</th>
+                <th style="padding:12px 16px;">Compliance Status</th>
+                <th style="padding:12px 16px;">Violations Flagged</th>
+                <th style="padding:12px 16px;">Telegram Alert</th>
+                <th style="padding:12px 16px;text-align:center;">Annotated Snapshot</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body">
+              <tr>
+                <td colspan="7" style="padding:32px;text-align:center;color:#94a3b8;">
+                  No audit scans recorded yet. Upload a photo or video above to create your first log entry!
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <script src="frontend/main.js?v=9"></script>
+  <!-- AUTH MODAL (Login / Register) -->
+  <div id="auth-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.6);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:400px;padding:28px;box-shadow:0 20px 48px rgba(0,0,0,0.2);position:relative;">
+      <button type="button" id="auth-modal-close" style="position:absolute;top:16px;right:16px;font-size:1.4rem;color:#94a3b8;cursor:pointer;background:none;border:none;">&times;</button>
+      
+      <div style="text-align:center;margin-bottom:20px;">
+        <h3 id="auth-modal-title" style="font-size:1.35rem;color:var(--navy);margin-bottom:6px;">Sign In to KitchenGuard</h3>
+        <p id="auth-modal-subtitle" style="font-size:0.875rem;color:var(--slate);">Access your kitchen's audit history and live telemetry.</p>
+      </div>
+
+      <form id="auth-form" style="display:flex;flex-direction:column;gap:14px;">
+        <div id="auth-email-group" style="display:none;flex-direction:column;gap:4px;">
+          <label style="font-size:0.8rem;font-weight:600;color:var(--slate);">Email Address</label>
+          <input type="email" id="auth-email-input" placeholder="chef@kitchenguard.ai" style="padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:0.9rem;" />
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:0.8rem;font-weight:600;color:var(--slate);">Username</label>
+          <input type="text" id="auth-username-input" required placeholder="chef_milind" style="padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:0.9rem;" />
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:0.8rem;font-weight:600;color:var(--slate);">Password</label>
+          <input type="password" id="auth-password-input" required placeholder="••••••••" style="padding:10px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:0.9rem;" />
+        </div>
+
+        <div id="auth-error-msg" style="color:#ef4444;font-size:0.82rem;display:none;"></div>
+
+        <button type="submit" class="btn btn--primary btn--full" id="auth-submit-btn" style="margin-top:8px;justify-content:center;">Sign In</button>
+      </form>
+
+      <div style="text-align:center;margin-top:16px;font-size:0.85rem;color:var(--slate);">
+        <span id="auth-switch-text">Don't have an account?</span>
+        <a href="#" id="auth-switch-link" style="color:#10B981;font-weight:600;margin-left:4px;">Register free</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SNAPSHOT PREVIEW MODAL -->
+  <div id="snapshot-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:10000;align-items:center;justify-content:center;padding:20px;">
+    <div style="position:relative;max-width:900px;width:100%;text-align:center;">
+      <button type="button" id="snapshot-modal-close" style="position:absolute;top:-40px;right:0;font-size:2rem;color:#fff;cursor:pointer;background:none;border:none;">&times;</button>
+      <img id="snapshot-modal-img" src="" style="max-width:100%;max-height:80vh;border-radius:8px;border:2px solid #10B981;box-shadow:0 10px 30px rgba(0,0,0,0.5);" alt="Annotated Snapshot" />
+      <div id="snapshot-modal-caption" style="color:#fff;margin-top:12px;font-size:0.95rem;"></div>
+    </div>
+  </div>
+
+  <script src="frontend/main.js?v=11"></script>
 </body>
 
 </html>
