@@ -821,6 +821,58 @@ def get_audit_stats(
     }
 
 
+from fastapi.responses import Response
+
+from scripts.report_generator import generate_violation_pdf
+
+
+@app.get("/api/scans/{scan_id}/pdf")
+def download_violation_pdf(
+    scan_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    """Generate and return official legal citation PDF document under FDA & HACCP regulations."""
+    scan = db.query(AuditScan).filter(AuditScan.id == scan_id).first()
+    if not scan:
+        raise HTTPException(status_code=404, detail="Audit scan record not found")
+
+    # Authorize: user can download their own scan or public sample, admin can download any
+    if scan.user_id and (
+        not current_user
+        or (current_user.role != "admin" and current_user.id != scan.user_id)
+    ):
+        raise HTTPException(
+            status_code=403, detail="Unauthorized access to this audit record"
+        )
+
+    # Find snapshot image if present
+    snapshot_abs = None
+    if scan.snapshot_path:
+        # snapshot_path format: /uploads/snapshots/xyz.jpg
+        clean_rel = scan.snapshot_path.lstrip("/")
+        candidate = PROJECT_ROOT / clean_rel
+        if candidate.exists():
+            snapshot_abs = str(candidate)
+
+    pdf_bytes = generate_violation_pdf(
+        scan=scan,
+        violations=scan.violations,
+        user=scan.user or current_user,
+        snapshot_abs_path=snapshot_abs,
+    )
+
+    filename = f"KitchenGuard_Citation_Scan_{scan.id:06d}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+        },
+    )
+
+
 @app.get("/", response_class=HTMLResponse)
 def index_ui():
     root_index = PROJECT_ROOT / "index.html"
