@@ -81,35 +81,38 @@ function loadAuditHistory() {
       row.style.borderBottom = '1px solid #E2E8F0';
 
       var statusBadge = scan.is_compliant
-        ? '<span style="background:rgba(16,185,129,0.12);color:#10B981;padding:4px 8px;border-radius:6px;font-weight:600;">✅ COMPLIANT</span>'
-        : '<span style="background:rgba(239,68,68,0.12);color:#EF4444;padding:4px 8px;border-radius:6px;font-weight:600;">🚨 VIOLATION</span>';
+        ? '<span class="badge badge--green">✅ Compliant</span>'
+        : '<span class="badge badge--red">🚨 Violation</span>';
 
-      var violationsText = '-';
+      var violationsText = '<span style="color:var(--slate-400);font-size:.82rem;">—</span>';
       if (scan.violations && scan.violations.length > 0) {
         violationsText = scan.violations.map(function (v) {
-          return '<span style="display:inline-block;background:#fee2e2;color:#b91c1c;padding:2px 6px;border-radius:4px;font-size:0.75rem;font-weight:600;margin:2px;">⚠️ ' + v.type.toUpperCase() + ' (' + Math.round(v.confidence * 100) + '%)</span>';
-        }).join(' ');
+          return '<span class="violation-chip">⚠ ' + v.type.replace(/_/g,' ').toUpperCase() + ' ' + Math.round(v.confidence * 100) + '%</span>';
+        }).join('');
       }
 
       var telegramBadge = scan.notification_sent
-        ? '<span style="color:#10B981;font-weight:600;display:inline-flex;align-items:center;gap:4px;">🟢 Delivered</span>'
-        : '<span style="color:#94a3b8;display:inline-flex;align-items:center;gap:4px;">⚪ Disabled</span>';
+        ? '<span class="badge badge--green">✓ Sent</span>'
+        : '<span class="badge badge--gray">— Off</span>';
 
       var snapshotBtn = scan.snapshot_url
-        ? '<button type="button" class="btn-view-snapshot" data-url="' + scan.snapshot_url + '" data-caption="' + scan.created_at + ' — ' + (scan.is_compliant ? '100% Compliant' : 'Violations Detected') + '" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.8rem;">🔍 View Image</button>'
-        : '<span style="color:#cbd5e1;">None</span>';
+        ? '<button type="button" class="tbl-btn tbl-btn--blue btn-view-snapshot" data-url="' + scan.snapshot_url + '" data-caption="' + scan.created_at + ' — ' + (scan.is_compliant ? '100% Compliant' : 'Violations Detected') + '">🔍 View</button>'
+        : '<span style="color:var(--gray-300);font-size:.8rem;">None</span>';
 
-      var pdfBtn = '<button type="button" class="btn-download-pdf" data-id="' + scan.id + '" style="background:' + (scan.is_compliant ? '#f0fdf4;color:#16a34a;border:1px solid #bbf7d0' : '#fef2f2;color:#dc2626;border:1px solid #fecaca') + ';padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;font-size:0.8rem;display:inline-flex;align-items:center;gap:4px;">📄 ' + (scan.is_compliant ? 'Audit Cert PDF' : 'Legal Citation PDF') + '</button>';
+      var pdfBtn = scan.is_compliant
+        ? '<button type="button" class="tbl-btn tbl-btn--green btn-download-pdf" data-id="' + scan.id + '">📄 Audit Cert</button>'
+        : '<button type="button" class="tbl-btn tbl-btn--red btn-download-pdf" data-id="' + scan.id + '">⚖️ Legal Citation</button>';
 
-      row.innerHTML = 
-        '<td style="padding:12px 16px;white-space:nowrap;font-size:0.82rem;color:#475569;">' + scan.created_at + '</td>' +
-        '<td style="padding:12px 16px;font-weight:600;color:var(--navy);">' + scan.user + '</td>' +
-        '<td style="padding:12px 16px;text-transform:capitalize;color:#475569;">' + scan.media_type + '</td>' +
-        '<td style="padding:12px 16px;">' + statusBadge + '</td>' +
-        '<td style="padding:12px 16px;">' + violationsText + '</td>' +
-        '<td style="padding:12px 16px;">' + telegramBadge + '</td>' +
-        '<td style="padding:12px 16px;text-align:center;">' + snapshotBtn + '</td>' +
-        '<td style="padding:12px 16px;text-align:center;">' + pdfBtn + '</td>';
+      var mediaIcon = scan.media_type === 'video' ? '🎥' : '🖼️';
+      row.innerHTML =
+        '<td style="white-space:nowrap;font-size:.82rem;color:var(--slate);">' + scan.created_at + '</td>' +
+        '<td style="font-weight:600;color:var(--navy);">👤 ' + scan.user + '</td>' +
+        '<td style="text-transform:capitalize;color:var(--slate);">' + mediaIcon + ' ' + scan.media_type + '</td>' +
+        '<td>' + statusBadge + '</td>' +
+        '<td style="min-width:160px;">' + violationsText + '</td>' +
+        '<td>' + telegramBadge + '</td>' +
+        '<td style="text-align:center;">' + snapshotBtn + '</td>' +
+        '<td style="text-align:center;">' + pdfBtn + '</td>';
 
       tableBody.appendChild(row);
     });
@@ -158,7 +161,7 @@ function loadAuditHistory() {
         if (snapModal && snapImg) {
           snapImg.src = getApiBaseUrl() + imgUrl;
           if (snapCaption) snapCaption.textContent = caption;
-          snapModal.style.display = 'flex';
+          snapModal.classList.add('is-open');
         }
       });
     });
@@ -175,9 +178,9 @@ document.addEventListener('DOMContentLoaded', function () {
   var snapModal = document.getElementById('snapshot-modal');
   var snapClose = document.getElementById('snapshot-modal-close');
   if (snapModal && snapClose) {
-    snapClose.addEventListener('click', function () { snapModal.style.display = 'none'; });
+    snapClose.addEventListener('click', function () { snapModal.classList.remove('is-open'); });
     snapModal.addEventListener('click', function (e) {
-      if (e.target === snapModal) snapModal.style.display = 'none';
+      if (e.target === snapModal) snapModal.classList.remove('is-open');
     });
   }
 
@@ -185,9 +188,9 @@ document.addEventListener('DOMContentLoaded', function () {
   var btnRefresh = document.getElementById('btn-refresh-history');
   if (btnRefresh) {
     btnRefresh.addEventListener('click', function () {
-      btnRefresh.textContent = 'Refreshing...';
+      btnRefresh.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin .7s linear infinite"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refreshing...';
       loadAuditHistory();
-      setTimeout(function () { btnRefresh.textContent = '🔄 Refresh Logs'; }, 500);
+      setTimeout(function () { btnRefresh.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh'; }, 600);
     });
   }
 
@@ -231,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function () {
     btnSignin.addEventListener('click', function (e) {
       e.preventDefault();
       setAuthMode(false);
-      authModal.style.display = 'flex';
+      authModal.classList.add('is-open');
     });
   }
 
@@ -239,14 +242,14 @@ document.addEventListener('DOMContentLoaded', function () {
     btnRegister.addEventListener('click', function (e) {
       e.preventDefault();
       setAuthMode(true);
-      authModal.style.display = 'flex';
+      authModal.classList.add('is-open');
     });
   }
 
   if (authClose && authModal) {
-    authClose.addEventListener('click', function () { authModal.style.display = 'none'; });
+    authClose.addEventListener('click', function () { authModal.classList.remove('is-open'); });
     authModal.addEventListener('click', function (e) {
-      if (e.target === authModal) authModal.style.display = 'none';
+      if (e.target === authModal) authModal.classList.remove('is-open');
     });
   }
 
@@ -301,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function () {
         authToken = data.access_token;
         currentUser = data.user;
         updateNavAuthState();
-        authModal.style.display = 'none';
+        authModal.classList.remove('is-open');
         loadAuditHistory();
       })
       .catch(function (err) {
