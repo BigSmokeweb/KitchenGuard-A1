@@ -40,11 +40,9 @@
 | **PPE Compliance** | **`hairnet`** | 🟢 Green | Verified clean hairnet / chef hat covering hair |
 | **PPE Compliance** | **`mask`** | 🟢 Green | Verified protective face / beard mask covering mouth & nose |
 | **PPE Compliance** | **`gloves`** | 🟢 Green | Verified sanitary food-handling gloves (latex / nitrile) |
-| **PPE Compliance** | **`apron`** | 🟢 Green | Verified clean protective apron / outer garment |
 | **Hygiene Infraction** | **`no_hairnet`** | 🔴 Red | Worker head detected without required hair covering |
 | **Hygiene Infraction** | **`no_mask`** | 🔴 Red | Worker face detected without protective face mask |
 | **Hygiene Infraction** | **`no_gloves`** | 🔴 Red | Worker hands detected without food-safe gloves |
-| **Hygiene Infraction** | **`no_apron`** | 🔴 Red | Worker body detected without required apron |
 
 ---
 
@@ -69,8 +67,6 @@ When a violation is logged, KitchenGuard AI generates a **formal regulatory cita
 | Missing Hairnet | FDA Food Code **§ 2-402.11** – Hair Restraints |
 | Missing Mask | FDA Food Code **§ 2-201.11** + **OSHA 29 CFR 1910.134** |
 | Missing Gloves | FDA Food Code **§ 3-301.11** – Bare Hand Contact Prevention |
-| Missing Apron | FDA Food Code **§ 2-404.11** – Clean Outer Clothing |
-| Cross-Contamination | FDA Food Code **§ 3-302.11** – Segregation of Food |
 
 > **Endpoint**: `GET /api/scans/{scan_id}/pdf` — returns `application/pdf` with authenticated access control.
 
@@ -164,22 +160,6 @@ To receive instant push notifications whenever a kitchen safety violation is det
    TELEGRAM_CHAT_ID=your_chat_id_here
    ```
 4. Test delivery instantly at: `http://localhost:8000/test-telegram`
-
----
-
-## 🔐 Authentication System
-
-KitchenGuard uses JWT-based authentication to protect audit logs and PDF downloads.
-
-| Endpoint | Method | Auth | Description |
-| :--- | :---: | :---: | :--- |
-| `/auth/register` | `POST` | ❌ | Create a new inspector account |
-| `/auth/login` | `POST` | ❌ | Login and receive JWT token |
-| `/auth/me` | `GET` | ✅ | Get current user profile |
-| `/predict` | `POST` | Optional | Run AI scan (logs if authenticated) |
-| `/api/scans` | `GET` | ✅ | Fetch your audit history |
-| `/api/scans/{id}/pdf` | `GET` | ✅ | Download legal citation PDF |
-| `/api/stats` | `GET` | ✅ | Compliance statistics dashboard |
 
 ---
 
